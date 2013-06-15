@@ -14,8 +14,8 @@ Erlang，Go
 Desc
 ====
 
-已知的史上 功能最强大 的协程库；
-最大的特点：__非侵入的兼容所有的已存在的同步阻塞库,如mysql,memcache客户端__
+已知的史上 功能最强大 的协程库；最大的特点：
+__非侵入的兼容所有的已存在的同步阻塞库,如mysql,memcache客户端__
 用阻塞的方式写socket程序！！新概念少，直接采用现有的socket api，使用简单；
 
 ###Api ：
@@ -31,7 +31,7 @@ Desc
 现只提供头文件以及测试程序
 
 ###Test :
-1,2 的测试见 test/yfr_coroutine_testor.cpp，测试功能如下：
+1,2,3 的测试见 test/yfr_coroutine_testor.cpp，测试功能如下：
 + TEST_F_INIT(CoroutineTestor, Switch);        - coroutine切换
 + TEST_F_INIT(CoroutineTestor, Sleep);         - sleep api
 + TEST_F_INIT(CoroutineTestor, IpcCond);       - cond api
@@ -40,7 +40,7 @@ Desc
 + TEST_F_INIT(CoroutineTestor, Dns);           - dns api，模拟多个协程同时查询不同的域名
 + TEST_F_INIT(CoroutineTestor, Mysql);         - mysql client lib test，多个协程调用mysql客户端读写mysql
 
-3 的测试较复杂见 test/yfr_sock_testor.cpp，测试功能是：
+4 的测试较复杂见 test/yfr_sock_testor.cpp，测试功能是：
 + 一个常驻内存svr
 + 一个client
 
