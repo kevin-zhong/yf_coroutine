@@ -1,0 +1,73 @@
+2013/03/06 makecontext 和 swapcontext 系统函数效率非常低下：
+
+cnt=10, time s=0
+cnt=20000000, time s=0
+cnt=20000000, time s=15
+平均1s才一百多万次切换；
+strace 下，发现
+
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [ALRM CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [ALRM CHLD], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [ALRM CHLD], [], 8) = 0
+
+一直在处理信号，至于为什么要处理信号，主要是为了防止在信号处理句柄中调用context系列函数
+会产生比较大的问题；但这个绝对了，我们很多情况下，并不是在信号处理中调用context函数；但
+这个套函数不管37=21，每次切换都处理信号，导致效率极其低下；
+
+且这还不是要命的问题，要命的问题是：
+调用的 sigprocmask 在多线程环境下的行为是未定义的，这造成多线程的程序不能使用context系列
+函数，否则。。。
+
+呃，一般涉及到信号的系统函数一定要慎重使用啊！！
+
+只能想其他办法切换堆栈了
+btw：siglongjmp 一样的问题；
+
+
+2013/03/08
+在编译O2优化和非优化的情况下，效率相差整整一倍；
+* on a computer with 8 cpus with real 64bit linux sys:
+* [       OK ] CoroutineTestor.Switch (6571|6643|6859|6620|6629|6771 ms)
+*
+* if on debug with -O0 compile, too slow
+[       OK ] CoroutineTestor.Switch (13118 ms)
+
+
+2013/03/13
+在测试coroutine的时候，发现在我的pc上总是会core在 fprintf 中，后来一分析，是协程的堆栈小了；
+学会了用 $sp 查看栈指针，可以很清楚的看到有没有栈溢出；
+奇怪的是 fprintf 怎么会这么耗栈空间；
+另外一奇怪的事情，这种 core 信号貌似 catch 不住，直接挂了；
+以下是gdb core文件的输出；
+(gdb) bt
+#0  0x002db49e in ?? () from /lib/libc.so.6
+#1  0x002d6413 in vfprintf () from /lib/libc.so.6
+#2  0x002e0a8f in fprintf () from /lib/libc.so.6
+#3  0x0804c43e in _coroutine_serach_kwd (r=0xb6eb3f40) at yf_coroutine_testor.cpp:362
+#4  0x00e68630 in _yfr_coroutine_proc (arg=0x0, gr=0xb6eb3f78) at ./coroutine/yfr_coroutine.c:250
+#5  0x00e692ca in _greenlet_start (arg=0xb6eb3f78) at ./coroutine/yfr_greenlet.c:13
+#6  0x00000000 in ?? ()
+(gdb) f 0
+#0  0x002db49e in ?? () from /lib/libc.so.6
+(gdb) p $sp
+$26 = (void *) 0xb6eb0e84
+(gdb) f 1
+#1  0x002d6413 in vfprintf () from /lib/libc.so.6
+(gdb) p $sp
+$27 = (void *) 0xb6eb2f6c
+(gdb) f 2 
+#2  0x002e0a8f in fprintf () from /lib/libc.so.6
+(gdb) p $sp
+$28 = (void *) 0xb6eb3518
+(gdb) f 3  
+#3  0x0804c43e in _coroutine_serach_kwd (r=0xb6eb3f40) at yf_coroutine_testor.cpp:362
+362                     fprintf(stderr, "r id=%lld, recv=-----\n%s\n_______\n", r->id, send_buf);
+(gdb) p $sp
+$29 = (void *) 0xb6eb352c
+(gdb) p 0xb6eb3518 - 0xb6eb2f6c
+$30 = 1452
+(gdb) p 0xb6eb2f6c - 0xb6eb0e84
+$31 = 8424

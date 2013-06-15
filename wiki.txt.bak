@@ -1,0 +1,63 @@
+2013/03/14
+coroutine功能基本完善，单元测试全部通过
+
+2013/03/14 18:58
+增加了 recvn, sendn 两个非常重要的自定义 api socket 函数；
+
+2013/03/15 18:53
+一天半终于把 socket_ext 中的复用socket api定下来了，感觉还是有点诡异；
+呃，暂时也没好办法了；
+
+2013/03/16 19:20
+一直在纠结怎样把yifei中的hash这个数据结构加上去；
+受到nginx的hash影响，差点一样画葫芦也搞个类似的功能复杂的hash加上去，
+搞了一个上午，发现掉进nginx的彀中了；把内存分配管理和hash的逻辑全混到
+一起了，硬是花了一个上午才把头文件定下来，数数代码行数，30多行不到，
+改了n次，最后定型，然后吃饭；吃饭的时候，猛然回过神来，这玩意怎么越看
+越别扭，用起来肯定也很难受；怎么和 stl 的hash一样了；再对比下已有的
+rbtree，猛然醒悟，我在用c++的思想在写c的代码；在c里面内存管理不是数据
+结构应该干的活；
+最后推到重来，很快头文件定义api都好了，感觉是那么自然轻松，因为再也不
+需要被怎么分配内存，怎么安排内存恶心到了；
+
+2013/03/20 20:10
+连接请求并发复用的代码写了几天了，写了大概700多行，最初的架构设想是
+每个连接专门起一个专用的coroutine来读数据；后来觉得这个有点浪费，于是乎
+想不起coroutine，就采用原生的evt回调来出来；代码越写越多，正常流程倒是
+也不难，难的是处理各类异常情况，发现没有coroutine的支持，代码越来越难
+写（就是回调和evt越来越多。。。一堆的on什么什么等callback函数）差点崩溃了；
+狠下心来，推翻现在的架构还是回到之前的架构上去；简单明了是其次，关键是处理
+异常要简单的多了；现在知道nginx的痛苦了吧，呃，能把那么长的流程全部用回调
+写出来，确实非常困难和恶心；coroutine，解决痛苦的利器；！
+
+
+2014/03/25 21:54
+觉得给socket用的 chain 用起来非常别扭，而且在有些情况下满足不了需求
+于是想开发自己的的socket专用缓冲buf，要满足几点：
+1，能自动伸缩，即能扩容，能缩减，以适应socket中不同的缓冲大小需求；
+2，尽量少memcpy，强效率；
+3，能像数组那样快速定位；
+4，提供文件类型的接口，比如 ftell，fseek，ftruncate，fread，fwrite；
+5，能直接提供内存片区，以供 socket 直接写（即socket读取的数据直接写入这个buf
+	避免读取后再调用buf write）
+	
+于是开发，接口改了又改，实现发现越来越复杂，比想象中的要复杂很多；
+周末两个晚上耗了6-7个小时才大体开发完毕；
+然后写单元测试，发现单元测试也不简单，测试程序要写好，也不容易，好几种
+情况下，发现都是测试程序写错了；
+
+大体能跑通，但还是有问题；。。。
+
+
+//coroutine lost...
+[kevin_zhong@localhost yf_coroutine]$ grep 508175508250 test/log/sock_svr.log | tail -10
+13/05/23 17:52:36 016 [./syscall_hook/yfr_socket_ext.c:1138]-[debug]-[3086173968-508175508250]recv datagram{type=request, id=7366, alllen=192157}, tdp_fd=508175532046
+13/05/23 17:52:36 016 [./coroutine/yfr_coroutine.c:436]-[debug]-[3086173968-508175508250]new coroutine created, id=4356466342680, ready cnt=1, block cnt=266
+13/05/23 17:52:36 016 [./mio_driver/event_in/yf_fd_event_in.c:227]-[debug]-[3086173968-508175508250]register fd evt, fd=13, evt=read_evt
+13/05/23 17:52:36 128 [./mio_driver/yf_send_recv.c:82]-[debug]-[3086173968-508175508250]recv: fd:13 -1 of 262144
+13/05/23 17:52:36 128 [./mio_driver/yf_send_recv.c:82]-[error]-[3086173968-508175508250]recv() failed (104: Connection reset by peer)
+13/05/23 17:52:36 128 [./syscall_hook/yfr_socket_ext.c:891]-[debug]-[3086173968-508175508250]readv len=[245988,16156], recv ret=-1
+13/05/23 17:52:36 128 [./syscall_hook/yfr_socket_ext.c:978]-[warn]-[3086173968-508175508250]to close, read err, fd=13,tdp_fd=508175532046
+13/05/23 17:52:36 128 [./base_struct/yf_mem_pool.c:78]-[debug]-[3086173968-508175508250]free: 0A815FF0, unused: 2008
+13/05/23 17:52:36 128 [./syscall_hook/yfr_socket_ext.c:1255]-[debug]-[3086173968-508175508250]rw error, type=0, delete from conn pool, rest conn num=2
+13/05/23 17:52:36 128 [./base_struct/yf_node_pool.c:73]-[debug]-[3086173968-508175508250]total_num=1024, after alloc 1369374808, free=1018, alloc_ptr=0934308C

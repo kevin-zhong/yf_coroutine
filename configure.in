@@ -1,0 +1,76 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.59)
+AC_INIT([Yf_Coroutine])
+AM_INIT_AUTOMAKE(Yf_Coroutine, 0.1)
+AC_CONFIG_SRCDIR([src/coroutine/yfr_coroutine.c])
+AC_CONFIG_HEADER([src/yfr_config.h])
+
+CC=gcc
+CXX=g++
+system_type=`uname -s 2>/dev/null`
+if test $system_type == "Darwin";then
+        CC=clang
+        CXX=clang++
+fi
+
+AC_PROG_CC
+AC_PROG_CXX
+
+# Checks for libraries.
+AC_PROG_RANLIB
+# for so...
+AC_PROG_LIBTOOL
+AC_CONFIG_MACRO_DIR([m4])
+# for asm
+AM_PROG_AS
+
+
+# debug option
+AC_ARG_ENABLE([debug],
+	[AS_HELP_STRING([--enable-debug], [debug program with log(default is no)])],
+	[CFLAGS="-g -O0";AC_DEFINE([YFR_DEBUG], [], ["enable debug"])],
+	[CFLAGS="-O2"])
+
+# test option
+TEST_DIR=""
+AC_ARG_ENABLE([unit_test],
+	[AS_HELP_STRING([--enable-unit-test], [unit test program])],
+	[TEST_DIR="test"], [])
+AC_SUBST(TEST_DIR)
+
+# mysql test option
+AC_MSG_CHECKING(for mysql_config support)
+AC_ARG_WITH(mysql_config, 
+    AC_HELP_STRING([--with-mysql_config@<:@=PATH@:>@],[Include mysql support, get mysql_config path]),
+    [mysql_config=$withval],[])
+
+if test "a"$mysql_config != "a";then
+        AC_DEFINE([HAVE_MYSQL], [], ["if test with mysql"])
+        AC_MSG_RESULT("mysql_config=$mysql_config")
+        AC_SUBST(mysql_include)
+        AC_SUBST(mysql_lib)
+        mysql_include=`$mysql_config --include`
+        mysql_lib=`$mysql_config --libs_r`
+else
+        AC_MSG_RESULT("no test with mysql")
+fi
+
+YIFEI_DIR="/usr/local/yifei"
+
+AC_MSG_CHECKING(for yifei support)
+AC_ARG_WITH(yifei,
+    AC_HELP_STRING([--with-yifei@<:@=PATH@:>@],[Include yifei support, get yifei path]),
+    [YIFEI_DIR=$withval],[]) 
+
+CFLAGS="$CFLAGS -I$YIFEI_DIR/src"
+LDFLAGS="-L$YIFEI_DIR/src/.libs -lyifei"
+
+CPPFLAGS=$CFLAGS
+CXXFLAGS=
+
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
+
+AC_OUTPUT
+
