@@ -1,10 +1,9 @@
 autoheader
 aclocal
 autoconf
-glibtoolize -f -c
+libtoolize -f -c
 automake -a
 mkdir -p m4
-mkdir -p test/log
 rm aclocal.m4
-#./configure  --enable-unit-test
+#./configure  --enable-unit-test --enable-multi-evt-driver
 #make

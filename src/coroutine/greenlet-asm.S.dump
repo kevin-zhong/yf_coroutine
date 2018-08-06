@@ -1,0 +1,194 @@
+/*
+ * This file is part of cgreenlet. CGreenlet is free software available
+ * under the terms of the MIT license. Consult the file LICENSE that was
+ * shipped together with this source file for the exact licensing terms.
+ *
+ * Copyright (c) 2012 by the cgreenlet authors. See the file AUTHORS for a
+ * full list.
+ *
+ * desc by kevin_zhong on 2013/07/26
+ * add new func '_greenlet_fcall_end' to support fcall
+ */
+
+#if defined(__WIN32__) || defined(__APPLE__)
+# define cdecl(s) _##s
+#else
+# define cdecl(s) s
+#endif
+
+.text
+
+.globl cdecl(_greenlet_savecontext)
+.globl cdecl(_greenlet_switchcontext)
+.globl cdecl(_greenlet_newstack)
+.globl cdecl(_greenlet_fcall_end)
+
+#if defined(__x86_64__)
+
+/*
+%rax 作为函数返回值使用
+%rsp 栈指针寄存器，指向栈顶
+%rdi，%rsi，%rdx，%rcx，%r8，%r9 用作函数参数，依次对应第1参数，第2参数。。。
+%rbx，%rbp，%r12，%r13，%14，%15 用作数据存储
+    rbp, rbx, rsp, r10~r15 的值如果在汇编模块中被改变了，在退出该模块时，必须将其恢复
+%r10，%r11 用作数据存储，遵循调用者使用规则，简单说就是使用之前要先保存原值
+*/
+
+cdecl(_greenlet_savecontext):
+    .cfi_startproc
+    .cfi_def_cfa %rsp,8
+    /*next two line very important, copy the IP ret addres to the context[0], {rsp point to the stack bottom, and stack[0]=ret addres}*/
+    movq (%rsp), %rax
+    movq %rax, (%rdi)
+
+    /*next three line just save sp(on ret from this func)which have pop ret addr*/
+    movq %rsp, %rax
+    addq $0x8, %rax
+    movq %rax, 0x8(%rdi)
+
+    movq %rbp, 0x10(%rdi)
+    movq %rbx, 0x18(%rdi)
+    movq %r12, 0x20(%rdi)
+    movq %r13, 0x28(%rdi)
+    movq %r14, 0x30(%rdi)
+    movq %r15, 0x38(%rdi)
+     /*set ret val=0, very important, yfr_greenlet_switch test ret=0, then follow down...to switch...*/
+    movq $0x0, %rax
+    ret
+    .cfi_endproc
+
+cdecl(_greenlet_switchcontext):
+    .cfi_startproc
+    .cfi_def_cfa %rsp,0
+    movq 0x8(%rdi), %rsp
+    movq 0x10(%rdi), %rbp
+    movq 0x18(%rdi), %rbx
+    movq 0x20(%rdi), %r12
+    movq 0x28(%rdi), %r13
+    movq 0x30(%rdi), %r14
+    movq 0x38(%rdi), %r15
+    testq %rsi, %rsi
+    jnz 1f
+    /*set ret val=1, very important, yfr_greenlet_switch test ret=1, then ret directly...*/
+    movq $0x1, %rax
+    /*jump directly to addres which is saved in context[0], just ret to the func that call _greenlet_savecontext, in fact=yfr_greenlet_switch*/
+    jmpq *(%rdi)
+1:
+    pushq (%rdi)
+    .cfi_def_cfa %rsp,8
+    movq %rdx, %rdi
+    callq *%rsi
+    movq $0x1, %rax
+    ret
+    .cfi_endproc
+
+cdecl(_greenlet_newstack):
+    .cfi_startproc
+    .cfi_def_cfa %rsp,8
+    movq %rdi, %rsp
+    movq %rdx, %rdi
+    pushq $0x0
+    jmpq *%rsi
+    .cfi_endproc
+
+cdecl(_greenlet_fcall_end):
+    nop
+    movq -0x8(%rbp), %rax
+    movq (%rbp), %rdi /* 设置函数参数 */
+    pushq $0x0
+    jmpq *%rax
+ 
+#elif defined(__i386__)
+
+cdecl(_greenlet_savecontext):
+    .cfi_startproc
+    .cfi_def_cfa %esp,8
+    movl %edi, %eax /* 1-要用到edi寄存器，因此寄存器属于caller，所以需要先保存到 eax */
+    movl 0x4(%esp), %edi /* 2-取出函数第一个参数即寄存器环境内存(gr_frame)地址到 edi寄存器 */
+
+    movl (%esp), %ecx /* 3-next2: 其实可以看成 movl (%esp) %(edi)，即将caller的ret地址(eip)保存到gr_frame[0]，后面会切回到这个地址来，但因为movl不支持src和dst都是内存，所以需走寄存器中转 */
+    movl %ecx, (%edi)
+
+    movl %esp, %ecx /* 4-next3: 保存caller 的 esp（因caller调用call指令导致esp减4，所以需加4） 到 gr_frame[1] */
+    addl $0x4, %ecx
+    movl %ecx, 0x4(%edi)
+
+    movl %ebp, 0x8(%edi) /* 5-next4: 保存 ebp, ebx, esi, edi(保存在eax)*/
+    movl %ebx, 0xc(%edi)
+    movl %esi, 0x10(%edi)
+    movl %eax, 0x14(%edi)
+
+    movl %eax, %edi /* 6-恢复caller的edi寄存器(与1相反) */
+
+    movl $0x0, %eax /* 7-next2: 返回0，上层的yfr_greenlet_switch调用判断返回0，于是继续往下走，执行后面的切换
+                    * 对于新的coroutine，进入 _greenlet_newstack, 否则进入: _greenlet_switchcontext
+                    * 注意：这是第一次进入这个函数
+                    */
+    ret             /* 注: 因为没有enter，所以也不需要leave, ret与caller中的call匹配，此函数调用中，esp, ebp 都没有动
+                    * ret = [popl %eip] 两处影响：i：恢复eip，ii：恢复了esp（因eip保存在esp中）
+                    */
+    .cfi_endproc
+
+cdecl(_greenlet_switchcontext):
+    .cfi_startproc
+    .cfi_def_cfa %esp,0
+    movl 0x4(%esp), %edi /* 1-取出函数第一个参数即寄存器环境内存(gr_frame)地址到 edi寄存器,因此函数根本不会返回到caller，所以也不需要保存caller的edi */
+    movl 0x8(%esp), %eax /* 2-取出函数第二个参数即inject函数指针到eax，后面会判断调用 */
+    movl 0xc(%esp), %ecx /* 2.1-取出函数第三个参数即ret或者输入arg，用于inject参数，其他地方没有用这个值 */
+
+    movl (%edi), %edx    /* 3-将gr_frame[0]即原来_greenlet_savecontext保存的ret地址取出到edx，后面会跳转回这个地址 */
+
+    movl 0x4(%edi), %esp /* 4-恢复caller的esp */
+
+    movl 0x8(%edi), %ebp /* 5-next4: 恢复ebp, ebx, esi, edi */
+    movl 0xc(%edi), %ebx
+    movl 0x10(%edi), %esi
+    movl 0x14(%edi), %edi
+
+    testl %eax, %eax /* 6-next2: 判断inject函数指针是否位NULL，有就跳转执行执行(通过call) */
+    jnz .Linject
+
+    movl $0x1, %eax  /* 7-next2: 设置返回为1，并跳转到 _greenlet_savecontext caller的ret地址
+                     * 实际在流程上会返回到 _greenlet_savecontext 的调用处，此时主coroutine第二次进入
+                     * yfr_greenlet_switch，因返回1，判断后，直接从 yfr_greenlet_switch 返回
+                     * 从这里可以看出主coroutine的运行是比较诡异的，一定要仔细才能理解
+                     * 4+7 两句其实是模拟从 _greenlet_savecontext 里面返回1（因环境是在_greenlet_savecontext保存的）
+                     *　　即：恢复了esp, eip, 返回放在eax
+                     */
+    jmpl *%edx
+
+.Linject:
+    pushl %edx
+    .cfi_def_cfa %esp,4
+    pushl %ecx
+    .cfi_def_cfa %esp,8
+    calll *%eax
+    popl %ecx
+    .cfi_def_cfa %esp,4
+    movl $0x1, %eax
+    ret
+    .cfi_endproc
+
+cdecl(_greenlet_newstack):
+    .cfi_startproc
+    .cfi_def_cfa %esp,4
+    movl %esp, %edi /* 参考c函数调用堆栈, cdecl call 调用后, 并没有执行enter指令, 所以其实ebp,esp都还是caller的，esp此时指向的是返回地址, esp+4指向第一个参数 */
+    movl 0x4(%edi), %esp /* 将函数第一个参数即栈地址赋值给esp寄存器 */
+    movl 0x8(%edi), %eax /* 目标执行代码赋值给eax寄存器，下面会有跳转到此地址 */
+    movl 0xc(%edi), %ecx /* 将函数第三个参数即函数调用的参数取出来赋值给ecx寄存器，下面会将此参数压入栈内 */
+    pushl %ecx /* 参数入栈 */
+    pushl $0x0 
+    jmpl *%eax  /* 函数调用
+                * 实际进入 _greenlet_start, 执行完毕后，此时不能像普通函数那样ret(因为根本就没有相应的栈),必须切换到主coroutine里面去，
+                * 也即 greenlet->gr_parent，然后调用 _greenlet_switchcontext 切换进入主coroutine的执行环境
+                */
+    .cfi_endproc
+
+cdecl(_greenlet_fcall_end):
+    nop
+    movl -0x4(%ebp), %eax
+    pushl (%ebp) /* 参数入栈 */
+    pushl $0x0
+    jmpl *%eax
+
+#endif

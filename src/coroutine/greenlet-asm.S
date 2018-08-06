@@ -5,6 +5,9 @@
  *
  * Copyright (c) 2012 by the cgreenlet authors. See the file AUTHORS for a
  * full list.
+ *
+ * desc by kevin_zhong on 2013/07/26
+ * add new func to support fcall 
  */
 
 #if defined(__WIN32__) || defined(__APPLE__)
@@ -18,8 +21,10 @@
 .globl cdecl(_greenlet_savecontext)
 .globl cdecl(_greenlet_switchcontext)
 .globl cdecl(_greenlet_newstack)
+.globl cdecl(_greenlet_fcall_end)
 
 #if defined(__x86_64__)
+
 
 cdecl(_greenlet_savecontext):
     .cfi_startproc
@@ -70,6 +75,13 @@ cdecl(_greenlet_newstack):
     pushq $0x0
     jmpq *%rsi
     .cfi_endproc
+
+cdecl(_greenlet_fcall_end):
+    nop
+    movq -0x8(%rbp), %rax
+    movq (%rbp), %rdi
+    pushq $0x0
+    jmpq *%rax
  
 #elif defined(__i386__)
 
@@ -95,7 +107,7 @@ cdecl(_greenlet_savecontext):
 cdecl(_greenlet_switchcontext):
     .cfi_startproc
     .cfi_def_cfa %esp,0
-    movl 0x4(%esp), %edi
+    movl 0x4(%esp), %edi 
     movl 0x8(%esp), %eax
     movl 0xc(%esp), %ecx
     movl (%edi), %edx
@@ -108,6 +120,7 @@ cdecl(_greenlet_switchcontext):
     jnz .Linject
     movl $0x1, %eax
     jmpl *%edx
+
 .Linject:
     pushl %edx
     .cfi_def_cfa %esp,4
@@ -131,5 +144,12 @@ cdecl(_greenlet_newstack):
     pushl $0x0
     jmpl *%eax
     .cfi_endproc
+
+cdecl(_greenlet_fcall_end):
+    nop
+    movl -0x4(%ebp), %eax
+    pushl (%ebp)
+    pushl $0x0
+    jmpl *%eax
 
 #endif

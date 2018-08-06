@@ -1,327 +1,347 @@
-yf_sock_testor.o: yf_sock_testor.cpp /usr/include/c++/4.2.1/algorithm \
-  /usr/include/c++/4.2.1/bits/stl_algobase.h \
-  /usr/include/c++/4.2.1/bits/c++config.h \
-  /usr/include/c++/4.2.1/bits/os_defines.h /usr/include/unistd.h \
-  /usr/include/_types.h /usr/include/sys/_types.h \
-  /usr/include/sys/cdefs.h /usr/include/sys/_symbol_aliasing.h \
-  /usr/include/sys/_posix_availability.h /usr/include/machine/_types.h \
-  /usr/include/i386/_types.h /usr/include/sys/unistd.h \
-  /usr/include/Availability.h /usr/include/AvailabilityInternal.h \
-  /usr/include/sys/select.h /usr/include/sys/appleapiopts.h \
-  /usr/include/sys/_structs.h /usr/include/sys/_select.h \
-  /usr/include/c++/4.2.1/bits/cpu_defines.h \
-  /usr/include/c++/4.2.1/cstring /usr/include/c++/4.2.1/cstddef \
-  /usr/bin/../lib/clang/4.2/include/stddef.h /usr/include/string.h \
-  /usr/include/strings.h /usr/include/c++/4.2.1/climits \
-  /usr/bin/../lib/clang/4.2/include/limits.h /usr/include/limits.h \
-  /usr/include/machine/limits.h /usr/include/i386/limits.h \
-  /usr/include/i386/_limits.h /usr/include/sys/syslimits.h \
-  /usr/include/c++/4.2.1/cstdlib /usr/include/stdlib.h \
-  /usr/include/sys/wait.h /usr/include/sys/signal.h \
-  /usr/include/machine/signal.h /usr/include/i386/signal.h \
-  /usr/include/i386/_structs.h /usr/include/machine/_structs.h \
-  /usr/include/mach/i386/_structs.h /usr/include/sys/resource.h \
-  /usr/include/machine/endian.h /usr/include/i386/endian.h \
-  /usr/include/sys/_endian.h /usr/include/libkern/_OSByteOrder.h \
-  /usr/include/libkern/i386/_OSByteOrder.h /usr/include/alloca.h \
-  /usr/include/machine/types.h /usr/include/i386/types.h \
-  /usr/include/c++/4.2.1/iosfwd /usr/include/c++/4.2.1/bits/c++locale.h \
-  /usr/include/c++/4.2.1/clocale /usr/include/locale.h \
-  /usr/include/_locale.h /usr/include/c++/4.2.1/cstdio \
-  /usr/include/stdio.h /usr/include/c++/4.2.1/cstdarg \
-  /usr/bin/../lib/clang/4.2/include/stdarg.h \
-  /usr/include/c++/4.2.1/bits/c++io.h /usr/include/c++/4.2.1/bits/gthr.h \
-  /usr/include/c++/4.2.1/bits/gthr-default.h /usr/include/pthread.h \
-  /usr/include/pthread_impl.h /usr/include/sched.h /usr/include/time.h \
-  /usr/include/_structs.h /usr/include/c++/4.2.1/cctype \
-  /usr/include/ctype.h /usr/include/runetype.h \
-  /usr/include/c++/4.2.1/bits/stringfwd.h \
-  /usr/include/c++/4.2.1/bits/postypes.h /usr/include/c++/4.2.1/cwchar \
-  /usr/include/c++/4.2.1/ctime /usr/include/wchar.h \
-  /usr/include/_wctype.h /usr/bin/../lib/clang/4.2/include/stdint.h \
-  /usr/include/stdint.h /usr/include/c++/4.2.1/bits/functexcept.h \
-  /usr/include/c++/4.2.1/exception_defines.h \
-  /usr/include/c++/4.2.1/bits/stl_pair.h \
-  /usr/include/c++/4.2.1/bits/cpp_type_traits.h \
-  /usr/include/c++/4.2.1/ext/type_traits.h \
-  /usr/include/c++/4.2.1/utility \
-  /usr/include/c++/4.2.1/bits/stl_relops.h \
-  /usr/include/c++/4.2.1/bits/stl_iterator_base_types.h \
-  /usr/include/c++/4.2.1/bits/stl_iterator_base_funcs.h \
-  /usr/include/c++/4.2.1/bits/concept_check.h \
-  /usr/include/c++/4.2.1/bits/stl_iterator.h \
-  /usr/include/c++/4.2.1/debug/debug.h \
-  /usr/include/c++/4.2.1/bits/stl_construct.h /usr/include/c++/4.2.1/new \
-  /usr/include/c++/4.2.1/exception \
-  /usr/include/c++/4.2.1/bits/stl_uninitialized.h \
-  /usr/include/c++/4.2.1/bits/stl_algo.h \
-  /usr/include/c++/4.2.1/bits/stl_heap.h \
-  /usr/include/c++/4.2.1/bits/stl_tempbuf.h \
-  /usr/include/c++/4.2.1/memory /usr/include/c++/4.2.1/bits/allocator.h \
-  /usr/include/c++/4.2.1/bits/c++allocator.h \
-  /usr/include/c++/4.2.1/ext/new_allocator.h \
-  /usr/include/c++/4.2.1/bits/stl_raw_storage_iter.h \
-  /usr/include/c++/4.2.1/limits ../src/coroutine/yfr_coroutine.h \
+yf_sock_testor.o yf_sock_testor.o: yf_sock_testor.cpp \
+  /usr/include/c++/4.1.2/algorithm \
+  /usr/include/c++/4.1.2/bits/stl_algobase.h \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++config.h \
+  /usr/include/bits/wordsize.h \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/os_defines.h \
+  /usr/include/features.h /usr/include/sys/cdefs.h \
+  /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/cpu_defines.h \
+  /usr/include/c++/4.1.2/cstring /usr/include/c++/4.1.2/cstddef \
+  /usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/stddef.h \
+  /usr/include/string.h /usr/include/xlocale.h \
+  /usr/include/c++/4.1.2/climits \
+  /usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/limits.h \
+  /usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/syslimits.h \
+  /usr/include/limits.h /usr/include/bits/posix1_lim.h \
+  /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
+  /usr/include/bits/posix2_lim.h /usr/include/bits/xopen_lim.h \
+  /usr/include/bits/stdio_lim.h /usr/include/c++/4.1.2/cstdlib \
+  /usr/include/stdlib.h /usr/include/bits/waitflags.h \
+  /usr/include/bits/waitstatus.h /usr/include/endian.h \
+  /usr/include/bits/endian.h /usr/include/sys/types.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/time.h /usr/include/sys/select.h \
+  /usr/include/bits/select.h /usr/include/bits/sigset.h \
+  /usr/include/bits/time.h /usr/include/sys/sysmacros.h \
+  /usr/include/bits/pthreadtypes.h /usr/include/alloca.h \
+  /usr/include/c++/4.1.2/iosfwd \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++locale.h \
+  /usr/include/c++/4.1.2/cstdio /usr/include/stdio.h /usr/include/libio.h \
+  /usr/include/_G_config.h /usr/include/wchar.h /usr/include/bits/wchar.h \
+  /usr/include/gconv.h \
+  /usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/stdarg.h \
+  /usr/include/bits/sys_errlist.h /usr/include/c++/4.1.2/clocale \
+  /usr/include/locale.h /usr/include/bits/locale.h \
+  /usr/include/langinfo.h /usr/include/nl_types.h /usr/include/iconv.h \
+  /usr/include/libintl.h \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++io.h \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/gthr.h \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/gthr-default.h \
+  /usr/include/pthread.h /usr/include/sched.h /usr/include/bits/sched.h \
+  /usr/include/signal.h /usr/include/bits/setjmp.h /usr/include/unistd.h \
+  /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
+  /usr/include/bits/confname.h /usr/include/getopt.h \
+  /usr/include/c++/4.1.2/cctype /usr/include/ctype.h \
+  /usr/include/c++/4.1.2/bits/stringfwd.h \
+  /usr/include/c++/4.1.2/bits/postypes.h /usr/include/c++/4.1.2/cwchar \
+  /usr/include/c++/4.1.2/ctime /usr/include/stdint.h \
+  /usr/include/c++/4.1.2/bits/functexcept.h \
+  /usr/include/c++/4.1.2/exception_defines.h \
+  /usr/include/c++/4.1.2/bits/stl_pair.h \
+  /usr/include/c++/4.1.2/bits/cpp_type_traits.h \
+  /usr/include/c++/4.1.2/bits/stl_iterator_base_types.h \
+  /usr/include/c++/4.1.2/bits/stl_iterator_base_funcs.h \
+  /usr/include/c++/4.1.2/bits/concept_check.h \
+  /usr/include/c++/4.1.2/bits/stl_iterator.h \
+  /usr/include/c++/4.1.2/debug/debug.h \
+  /usr/include/c++/4.1.2/bits/stl_construct.h /usr/include/c++/4.1.2/new \
+  /usr/include/c++/4.1.2/exception \
+  /usr/include/c++/4.1.2/bits/stl_uninitialized.h \
+  /usr/include/c++/4.1.2/bits/stl_algo.h \
+  /usr/include/c++/4.1.2/bits/stl_heap.h \
+  /usr/include/c++/4.1.2/bits/stl_tempbuf.h /usr/include/c++/4.1.2/memory \
+  /usr/include/c++/4.1.2/bits/allocator.h \
+  /usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++allocator.h \
+  /usr/include/c++/4.1.2/ext/new_allocator.h \
+  /usr/include/c++/4.1.2/bits/stl_raw_storage_iter.h \
+  /usr/include/c++/4.1.2/limits ../src/coroutine/yfr_coroutine.h \
   ../src/yfr_head.h ../src/yfr_config.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_header.h \
-  /Users/qq2000zhong/yifei/src/ppc/../yf_config.h /usr/include/assert.h \
-  /usr/include/sys/types.h /usr/include/sys/socket.h \
-  /usr/include/machine/_param.h /usr/include/i386/_param.h \
-  /usr/include/sys/time.h /usr/include/netinet/in.h \
-  /usr/include/netinet6/in6.h /usr/include/arpa/inet.h \
-  /usr/include/errno.h /usr/include/sys/errno.h /usr/include/fcntl.h \
-  /usr/include/sys/fcntl.h /usr/include/signal.h /usr/include/sys/stat.h \
-  /usr/include/sys/uio.h /usr/include/sys/un.h /usr/include/dirent.h \
-  /usr/include/sys/dirent.h /usr/include/sys/mman.h \
-  /usr/include/sys/event.h /usr/include/sys/queue.h \
-  /usr/include/netinet/tcp.h /usr/include/sys/ioctl.h \
-  /usr/include/sys/ttycom.h /usr/include/sys/ioccom.h \
-  /usr/include/sys/filio.h /usr/include/sys/sockio.h \
-  /usr/include/net/if_dl.h /usr/include/netdb.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_int.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_sys_call.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_core.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_id_seed.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_string.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_mem_pool.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_buf.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_array.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_list.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_node_pool.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_slab_pool.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_hash.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_rbtree.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_bit_op.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_log.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_atomic.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_fast_lock.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_tpl_hash.h \
-  /Users/qq2000zhong/yifei/src/base_struct/yf_circular_buf.h \
-  /usr/include/poll.h /usr/include/sys/poll.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_alloc.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_errno.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_socket.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_file.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_shmem.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_process.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_setproctitle.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_thread.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_time.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_channel.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_signal.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_proc_ctx.h \
-  /Users/qq2000zhong/yifei/src/ppc/yf_atexit.h \
-  /Users/qq2000zhong/yifei/src/mio_driver/yf_event.h \
-  /Users/qq2000zhong/yifei/src/bridge/yf_bridge.h \
-  ../src/syscall_hook/yfr_syscall.h ../src/syscall_hook/yfr_dlsym.h \
-  ../src/syscall_hook/yfr_ipc.h ../src/syscall_hook/yfr_socket_ext.h \
-  /Users/qq2000zhong/yifei/src/log_ext/yf_log_file.h
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_header.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/../yf_config.h \
+  /usr/include/assert.h /usr/include/sys/socket.h /usr/include/sys/uio.h \
+  /usr/include/bits/uio.h /usr/include/bits/socket.h \
+  /usr/include/bits/sockaddr.h /usr/include/asm/socket.h \
+  /usr/include/asm-x86_64/socket.h /usr/include/asm/sockios.h \
+  /usr/include/asm-x86_64/sockios.h /usr/include/sys/time.h \
+  /usr/include/netinet/in.h /usr/include/bits/in.h \
+  /usr/include/bits/byteswap.h /usr/include/arpa/inet.h \
+  /usr/include/errno.h /usr/include/bits/errno.h \
+  /usr/include/linux/errno.h /usr/include/asm/errno.h \
+  /usr/include/asm-x86_64/errno.h /usr/include/asm-generic/errno.h \
+  /usr/include/asm-generic/errno-base.h /usr/include/fcntl.h \
+  /usr/include/bits/fcntl.h /usr/include/sys/stat.h \
+  /usr/include/bits/stat.h /usr/include/bits/signum.h \
+  /usr/include/bits/siginfo.h /usr/include/bits/sigaction.h \
+  /usr/include/bits/sigcontext.h /usr/include/bits/sigstack.h \
+  /usr/include/sys/ucontext.h /usr/include/bits/sigthread.h \
+  /usr/include/sys/wait.h /usr/include/sys/resource.h \
+  /usr/include/bits/resource.h /usr/include/sys/un.h \
+  /usr/include/dirent.h /usr/include/bits/dirent.h \
+  /usr/include/sys/mman.h /usr/include/bits/mman.h /usr/include/strings.h \
+  /usr/include/netinet/tcp.h /usr/include/malloc.h \
+  /usr/include/sys/ioctl.h /usr/include/bits/ioctls.h \
+  /usr/include/asm/ioctls.h /usr/include/asm-x86_64/ioctls.h \
+  /usr/include/asm/ioctl.h /usr/include/asm-x86_64/ioctl.h \
+  /usr/include/asm-generic/ioctl.h /usr/include/bits/ioctl-types.h \
+  /usr/include/sys/ttydefaults.h /usr/include/netdb.h \
+  /usr/include/rpc/netdb.h /usr/include/bits/netdb.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_int.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_sys_call.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_core.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_string.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_id_seed.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_mem_pool.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_buf.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_array.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_list.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_node_pool.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_slab_pool.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_hash.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_rbtree.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_bit_op.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_log.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_atomic.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_fast_lock.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_tpl_hash.h \
+  /home/kevin_zhong/lib/yifei//include/base_struct/yf_circular_buf.h \
+  /usr/include/poll.h /usr/include/sys/poll.h /usr/include/bits/poll.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_alloc.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_atomic.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_errno.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_fast_lock.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_socket.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_file.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_shmem.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_process.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_setproctitle.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_thread.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_time.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_channel.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_signal.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_proc_ctx.h \
+  /home/kevin_zhong/lib/yifei//include/ppc/yf_atexit.h \
+  /home/kevin_zhong/lib/yifei//include/mio_driver/yf_event.h \
+  /home/kevin_zhong/lib/yifei//include/bridge/yf_bridge.h \
+  ../src/coroutine/yfr_greenlet.h ../src/syscall_hook/yfr_syscall.h \
+  ../src/syscall_hook/yfr_dlsym.h ../src/syscall_hook/yfr_ipc.h \
+  ../src/syscall_hook/yfr_dlsym.h ../src/syscall_hook/yfr_ipc.h \
+  ../src/syscall_hook/yfr_socket_ext.h ../src/syscall_hook/yfr_syscall.h \
+  /home/kevin_zhong/lib/yifei//include/log_ext/yf_log_file.h
 
-/usr/include/c++/4.2.1/algorithm:
+/usr/include/c++/4.1.2/algorithm:
 
-/usr/include/c++/4.2.1/bits/stl_algobase.h:
+/usr/include/c++/4.1.2/bits/stl_algobase.h:
 
-/usr/include/c++/4.2.1/bits/c++config.h:
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++config.h:
 
-/usr/include/c++/4.2.1/bits/os_defines.h:
+/usr/include/bits/wordsize.h:
 
-/usr/include/unistd.h:
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/os_defines.h:
 
-/usr/include/_types.h:
-
-/usr/include/sys/_types.h:
+/usr/include/features.h:
 
 /usr/include/sys/cdefs.h:
 
-/usr/include/sys/_symbol_aliasing.h:
+/usr/include/gnu/stubs.h:
 
-/usr/include/sys/_posix_availability.h:
+/usr/include/gnu/stubs-64.h:
 
-/usr/include/machine/_types.h:
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/cpu_defines.h:
 
-/usr/include/i386/_types.h:
+/usr/include/c++/4.1.2/cstring:
 
-/usr/include/sys/unistd.h:
+/usr/include/c++/4.1.2/cstddef:
 
-/usr/include/Availability.h:
-
-/usr/include/AvailabilityInternal.h:
-
-/usr/include/sys/select.h:
-
-/usr/include/sys/appleapiopts.h:
-
-/usr/include/sys/_structs.h:
-
-/usr/include/sys/_select.h:
-
-/usr/include/c++/4.2.1/bits/cpu_defines.h:
-
-/usr/include/c++/4.2.1/cstring:
-
-/usr/include/c++/4.2.1/cstddef:
-
-/usr/bin/../lib/clang/4.2/include/stddef.h:
+/usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/stddef.h:
 
 /usr/include/string.h:
 
-/usr/include/strings.h:
+/usr/include/xlocale.h:
 
-/usr/include/c++/4.2.1/climits:
+/usr/include/c++/4.1.2/climits:
 
-/usr/bin/../lib/clang/4.2/include/limits.h:
+/usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/limits.h:
+
+/usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/syslimits.h:
 
 /usr/include/limits.h:
 
-/usr/include/machine/limits.h:
+/usr/include/bits/posix1_lim.h:
 
-/usr/include/i386/limits.h:
+/usr/include/bits/local_lim.h:
 
-/usr/include/i386/_limits.h:
+/usr/include/linux/limits.h:
 
-/usr/include/sys/syslimits.h:
+/usr/include/bits/posix2_lim.h:
 
-/usr/include/c++/4.2.1/cstdlib:
+/usr/include/bits/xopen_lim.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/c++/4.1.2/cstdlib:
 
 /usr/include/stdlib.h:
 
-/usr/include/sys/wait.h:
+/usr/include/bits/waitflags.h:
 
-/usr/include/sys/signal.h:
+/usr/include/bits/waitstatus.h:
 
-/usr/include/machine/signal.h:
+/usr/include/endian.h:
 
-/usr/include/i386/signal.h:
+/usr/include/bits/endian.h:
 
-/usr/include/i386/_structs.h:
+/usr/include/sys/types.h:
 
-/usr/include/machine/_structs.h:
+/usr/include/bits/types.h:
 
-/usr/include/mach/i386/_structs.h:
-
-/usr/include/sys/resource.h:
-
-/usr/include/machine/endian.h:
-
-/usr/include/i386/endian.h:
-
-/usr/include/sys/_endian.h:
-
-/usr/include/libkern/_OSByteOrder.h:
-
-/usr/include/libkern/i386/_OSByteOrder.h:
-
-/usr/include/alloca.h:
-
-/usr/include/machine/types.h:
-
-/usr/include/i386/types.h:
-
-/usr/include/c++/4.2.1/iosfwd:
-
-/usr/include/c++/4.2.1/bits/c++locale.h:
-
-/usr/include/c++/4.2.1/clocale:
-
-/usr/include/locale.h:
-
-/usr/include/_locale.h:
-
-/usr/include/c++/4.2.1/cstdio:
-
-/usr/include/stdio.h:
-
-/usr/include/c++/4.2.1/cstdarg:
-
-/usr/bin/../lib/clang/4.2/include/stdarg.h:
-
-/usr/include/c++/4.2.1/bits/c++io.h:
-
-/usr/include/c++/4.2.1/bits/gthr.h:
-
-/usr/include/c++/4.2.1/bits/gthr-default.h:
-
-/usr/include/pthread.h:
-
-/usr/include/pthread_impl.h:
-
-/usr/include/sched.h:
+/usr/include/bits/typesizes.h:
 
 /usr/include/time.h:
 
-/usr/include/_structs.h:
+/usr/include/sys/select.h:
 
-/usr/include/c++/4.2.1/cctype:
+/usr/include/bits/select.h:
 
-/usr/include/ctype.h:
+/usr/include/bits/sigset.h:
 
-/usr/include/runetype.h:
+/usr/include/bits/time.h:
 
-/usr/include/c++/4.2.1/bits/stringfwd.h:
+/usr/include/sys/sysmacros.h:
 
-/usr/include/c++/4.2.1/bits/postypes.h:
+/usr/include/bits/pthreadtypes.h:
 
-/usr/include/c++/4.2.1/cwchar:
+/usr/include/alloca.h:
 
-/usr/include/c++/4.2.1/ctime:
+/usr/include/c++/4.1.2/iosfwd:
+
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++locale.h:
+
+/usr/include/c++/4.1.2/cstdio:
+
+/usr/include/stdio.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
 
 /usr/include/wchar.h:
 
-/usr/include/_wctype.h:
+/usr/include/bits/wchar.h:
 
-/usr/bin/../lib/clang/4.2/include/stdint.h:
+/usr/include/gconv.h:
+
+/usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/stdarg.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/c++/4.1.2/clocale:
+
+/usr/include/locale.h:
+
+/usr/include/bits/locale.h:
+
+/usr/include/langinfo.h:
+
+/usr/include/nl_types.h:
+
+/usr/include/iconv.h:
+
+/usr/include/libintl.h:
+
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++io.h:
+
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/gthr.h:
+
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/gthr-default.h:
+
+/usr/include/pthread.h:
+
+/usr/include/sched.h:
+
+/usr/include/bits/sched.h:
+
+/usr/include/signal.h:
+
+/usr/include/bits/setjmp.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/environments.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/getopt.h:
+
+/usr/include/c++/4.1.2/cctype:
+
+/usr/include/ctype.h:
+
+/usr/include/c++/4.1.2/bits/stringfwd.h:
+
+/usr/include/c++/4.1.2/bits/postypes.h:
+
+/usr/include/c++/4.1.2/cwchar:
+
+/usr/include/c++/4.1.2/ctime:
 
 /usr/include/stdint.h:
 
-/usr/include/c++/4.2.1/bits/functexcept.h:
+/usr/include/c++/4.1.2/bits/functexcept.h:
 
-/usr/include/c++/4.2.1/exception_defines.h:
+/usr/include/c++/4.1.2/exception_defines.h:
 
-/usr/include/c++/4.2.1/bits/stl_pair.h:
+/usr/include/c++/4.1.2/bits/stl_pair.h:
 
-/usr/include/c++/4.2.1/bits/cpp_type_traits.h:
+/usr/include/c++/4.1.2/bits/cpp_type_traits.h:
 
-/usr/include/c++/4.2.1/ext/type_traits.h:
+/usr/include/c++/4.1.2/bits/stl_iterator_base_types.h:
 
-/usr/include/c++/4.2.1/utility:
+/usr/include/c++/4.1.2/bits/stl_iterator_base_funcs.h:
 
-/usr/include/c++/4.2.1/bits/stl_relops.h:
+/usr/include/c++/4.1.2/bits/concept_check.h:
 
-/usr/include/c++/4.2.1/bits/stl_iterator_base_types.h:
+/usr/include/c++/4.1.2/bits/stl_iterator.h:
 
-/usr/include/c++/4.2.1/bits/stl_iterator_base_funcs.h:
+/usr/include/c++/4.1.2/debug/debug.h:
 
-/usr/include/c++/4.2.1/bits/concept_check.h:
+/usr/include/c++/4.1.2/bits/stl_construct.h:
 
-/usr/include/c++/4.2.1/bits/stl_iterator.h:
+/usr/include/c++/4.1.2/new:
 
-/usr/include/c++/4.2.1/debug/debug.h:
+/usr/include/c++/4.1.2/exception:
 
-/usr/include/c++/4.2.1/bits/stl_construct.h:
+/usr/include/c++/4.1.2/bits/stl_uninitialized.h:
 
-/usr/include/c++/4.2.1/new:
+/usr/include/c++/4.1.2/bits/stl_algo.h:
 
-/usr/include/c++/4.2.1/exception:
+/usr/include/c++/4.1.2/bits/stl_heap.h:
 
-/usr/include/c++/4.2.1/bits/stl_uninitialized.h:
+/usr/include/c++/4.1.2/bits/stl_tempbuf.h:
 
-/usr/include/c++/4.2.1/bits/stl_algo.h:
+/usr/include/c++/4.1.2/memory:
 
-/usr/include/c++/4.2.1/bits/stl_heap.h:
+/usr/include/c++/4.1.2/bits/allocator.h:
 
-/usr/include/c++/4.2.1/bits/stl_tempbuf.h:
+/usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++allocator.h:
 
-/usr/include/c++/4.2.1/memory:
+/usr/include/c++/4.1.2/ext/new_allocator.h:
 
-/usr/include/c++/4.2.1/bits/allocator.h:
+/usr/include/c++/4.1.2/bits/stl_raw_storage_iter.h:
 
-/usr/include/c++/4.2.1/bits/c++allocator.h:
-
-/usr/include/c++/4.2.1/ext/new_allocator.h:
-
-/usr/include/c++/4.2.1/bits/stl_raw_storage_iter.h:
-
-/usr/include/c++/4.2.1/limits:
+/usr/include/c++/4.1.2/limits:
 
 ../src/coroutine/yfr_coroutine.h:
 
@@ -329,141 +349,201 @@ yf_sock_testor.o: yf_sock_testor.cpp /usr/include/c++/4.2.1/algorithm \
 
 ../src/yfr_config.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_header.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_header.h:
 
-/Users/qq2000zhong/yifei/src/ppc/../yf_config.h:
+/home/kevin_zhong/lib/yifei//include/ppc/../yf_config.h:
 
 /usr/include/assert.h:
 
-/usr/include/sys/types.h:
-
 /usr/include/sys/socket.h:
 
-/usr/include/machine/_param.h:
+/usr/include/sys/uio.h:
 
-/usr/include/i386/_param.h:
+/usr/include/bits/uio.h:
+
+/usr/include/bits/socket.h:
+
+/usr/include/bits/sockaddr.h:
+
+/usr/include/asm/socket.h:
+
+/usr/include/asm-x86_64/socket.h:
+
+/usr/include/asm/sockios.h:
+
+/usr/include/asm-x86_64/sockios.h:
 
 /usr/include/sys/time.h:
 
 /usr/include/netinet/in.h:
 
-/usr/include/netinet6/in6.h:
+/usr/include/bits/in.h:
+
+/usr/include/bits/byteswap.h:
 
 /usr/include/arpa/inet.h:
 
 /usr/include/errno.h:
 
-/usr/include/sys/errno.h:
+/usr/include/bits/errno.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/asm/errno.h:
+
+/usr/include/asm-x86_64/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
 
 /usr/include/fcntl.h:
 
-/usr/include/sys/fcntl.h:
-
-/usr/include/signal.h:
+/usr/include/bits/fcntl.h:
 
 /usr/include/sys/stat.h:
 
-/usr/include/sys/uio.h:
+/usr/include/bits/stat.h:
+
+/usr/include/bits/signum.h:
+
+/usr/include/bits/siginfo.h:
+
+/usr/include/bits/sigaction.h:
+
+/usr/include/bits/sigcontext.h:
+
+/usr/include/bits/sigstack.h:
+
+/usr/include/sys/ucontext.h:
+
+/usr/include/bits/sigthread.h:
+
+/usr/include/sys/wait.h:
+
+/usr/include/sys/resource.h:
+
+/usr/include/bits/resource.h:
 
 /usr/include/sys/un.h:
 
 /usr/include/dirent.h:
 
-/usr/include/sys/dirent.h:
+/usr/include/bits/dirent.h:
 
 /usr/include/sys/mman.h:
 
-/usr/include/sys/event.h:
+/usr/include/bits/mman.h:
 
-/usr/include/sys/queue.h:
+/usr/include/strings.h:
 
 /usr/include/netinet/tcp.h:
 
+/usr/include/malloc.h:
+
 /usr/include/sys/ioctl.h:
 
-/usr/include/sys/ttycom.h:
+/usr/include/bits/ioctls.h:
 
-/usr/include/sys/ioccom.h:
+/usr/include/asm/ioctls.h:
 
-/usr/include/sys/filio.h:
+/usr/include/asm-x86_64/ioctls.h:
 
-/usr/include/sys/sockio.h:
+/usr/include/asm/ioctl.h:
 
-/usr/include/net/if_dl.h:
+/usr/include/asm-x86_64/ioctl.h:
+
+/usr/include/asm-generic/ioctl.h:
+
+/usr/include/bits/ioctl-types.h:
+
+/usr/include/sys/ttydefaults.h:
 
 /usr/include/netdb.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_int.h:
+/usr/include/rpc/netdb.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_sys_call.h:
+/usr/include/bits/netdb.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_core.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_int.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_id_seed.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_sys_call.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_string.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_core.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_mem_pool.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_string.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_buf.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_id_seed.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_array.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_mem_pool.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_list.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_buf.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_node_pool.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_array.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_slab_pool.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_list.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_hash.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_node_pool.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_rbtree.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_slab_pool.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_bit_op.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_hash.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_log.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_rbtree.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_atomic.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_bit_op.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_fast_lock.h:
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_log.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_tpl_hash.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_atomic.h:
 
-/Users/qq2000zhong/yifei/src/base_struct/yf_circular_buf.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_fast_lock.h:
+
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_tpl_hash.h:
+
+/home/kevin_zhong/lib/yifei//include/base_struct/yf_circular_buf.h:
 
 /usr/include/poll.h:
 
 /usr/include/sys/poll.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_alloc.h:
+/usr/include/bits/poll.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_errno.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_alloc.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_socket.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_atomic.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_file.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_errno.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_shmem.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_fast_lock.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_process.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_socket.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_setproctitle.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_file.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_thread.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_shmem.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_time.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_process.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_channel.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_setproctitle.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_signal.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_thread.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_proc_ctx.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_time.h:
 
-/Users/qq2000zhong/yifei/src/ppc/yf_atexit.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_channel.h:
 
-/Users/qq2000zhong/yifei/src/mio_driver/yf_event.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_signal.h:
 
-/Users/qq2000zhong/yifei/src/bridge/yf_bridge.h:
+/home/kevin_zhong/lib/yifei//include/ppc/yf_proc_ctx.h:
+
+/home/kevin_zhong/lib/yifei//include/ppc/yf_atexit.h:
+
+/home/kevin_zhong/lib/yifei//include/mio_driver/yf_event.h:
+
+/home/kevin_zhong/lib/yifei//include/bridge/yf_bridge.h:
+
+../src/coroutine/yfr_greenlet.h:
 
 ../src/syscall_hook/yfr_syscall.h:
 
@@ -471,6 +551,12 @@ yf_sock_testor.o: yf_sock_testor.cpp /usr/include/c++/4.2.1/algorithm \
 
 ../src/syscall_hook/yfr_ipc.h:
 
+../src/syscall_hook/yfr_dlsym.h:
+
+../src/syscall_hook/yfr_ipc.h:
+
 ../src/syscall_hook/yfr_socket_ext.h:
 
-/Users/qq2000zhong/yifei/src/log_ext/yf_log_file.h:
+../src/syscall_hook/yfr_syscall.h:
+
+/home/kevin_zhong/lib/yifei//include/log_ext/yf_log_file.h:

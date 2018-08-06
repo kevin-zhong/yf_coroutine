@@ -18,8 +18,6 @@ fi
 AC_PROG_CC
 AC_PROG_CXX
 
-# Checks for libraries.
-AC_PROG_RANLIB
 # for so...
 AC_PROG_LIBTOOL
 AC_CONFIG_MACRO_DIR([m4])
@@ -64,8 +62,8 @@ AC_ARG_WITH(yifei,
     AC_HELP_STRING([--with-yifei@<:@=PATH@:>@],[Include yifei support, get yifei path]),
     [YIFEI_DIR=$withval],[]) 
 
-CFLAGS="$CFLAGS -I$YIFEI_DIR/src"
-LDFLAGS="-L$YIFEI_DIR/src/.libs -lyifei"
+CFLAGS="$CFLAGS -I$YIFEI_DIR/include"
+LDFLAGS="-L$YIFEI_DIR/lib -lyifei"
 
 CPPFLAGS=$CFLAGS
 CXXFLAGS=

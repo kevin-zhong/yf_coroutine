@@ -19,6 +19,8 @@ yfr_tdp_addr_t  _test_tdp_addr[4];
 yfr_tdp_matrix* _test_matrix[4];
 
 yf_s32_t  _test_query_cnt = 0, _test_resp_cnt = 0, _test_max_query = 0;
+yf_int_t _sleep_test_timeout = 0;
+yf_int_t _test_body_len_page_size = 250;
 
 //protocal
 struct _test_sock_head
@@ -99,10 +101,13 @@ yfr_datagram_framer_t  _test_sock_framer = {5, sizeof(_test_sock_head),
 
 #define _TEST_SOCK_WAIT_RESP_MS  6000
 
+//max_msg_len = align2power(x) * YF_CIRCULAR_BUF_MAX_NUM
+#define _TEST_TCP_BUF_CHUNKSIZE_PAGE_SIZE 4096
+
 //test biz
 yf_int_t _test_sock_coroutine_client(yfr_coroutine_t* r)
 {
-        char* send_buf = (char*)malloc(yf_pagesize*128 + sizeof(_test_sock_head));
+        char* send_buf = (char*)malloc(yf_pagesize*_test_body_len_page_size + sizeof(_test_sock_head));
 
         _test_sock_head*  req_head = (_test_sock_head*)send_buf, *resp_head;
         send_buf += sizeof(_test_sock_head);
@@ -128,11 +133,12 @@ yf_int_t _test_sock_coroutine_client(yfr_coroutine_t* r)
                 if (reqid == 0)
                 {
                         fprintf(stderr, "alloc reqid failed\n");
-                        sleep(yf_mod(random(), 8));
+                        if (_sleep_test_timeout)
+                                sleep(yf_mod(random(), 8));
                         continue;
                 }
                 
-                yf_u32_t body_len = yf_mod(random(), yf_pagesize*128);
+                yf_u32_t body_len = random() % (yf_pagesize*_test_body_len_page_size);
                 yf_memset(send_buf, yf_mod(random(), 128), body_len);
 
                 req_head->seq = reqid;
@@ -143,7 +149,8 @@ yf_int_t _test_sock_coroutine_client(yfr_coroutine_t* r)
                 if (ret != YF_OK)
                 {
                         fprintf(stderr, "choice=%d, send req blen=%d failed\n", choice, body_len);
-                        sleep(yf_mod(random(), 8));
+                        if (_sleep_test_timeout)
+                                sleep(yf_mod(random(), 8));
                         continue;
                 }
 
@@ -154,7 +161,8 @@ yf_int_t _test_sock_coroutine_client(yfr_coroutine_t* r)
                 {
                         fprintf(stderr, "choice=%d, recv req=%d blen=%d resp failed\n", 
                                         choice, (int)reqid, body_len);
-                        sleep(yf_mod(random(), 8));
+                        if (_sleep_test_timeout)
+                                sleep(yf_mod(random(), 8));
                         continue;
                 }
 
@@ -261,9 +269,12 @@ yf_int_t  _test_sock_coroutine_svr(yfr_coroutine_t* r)
         yf_log_debug(YF_LOG_DEBUG, _log, 0, "recv req=%d len=%d after process", 
                         resp_head->seq, resp_head->body_len);
         yf_u32_t sleep_ms = random() % (_TEST_SOCK_WAIT_RESP_MS);
-        usleep(sleep_ms * 1000);
-        yf_log_debug(YF_LOG_DEBUG, _log, 0, "req=%d len=%d deal with sleep=%d ms", 
-                        resp_head->seq, resp_head->body_len, sleep_ms);
+        if (_sleep_test_timeout)
+        {
+                usleep(sleep_ms * 1000);
+                yf_log_debug(YF_LOG_DEBUG, _log, 0, "req=%d len=%d deal with sleep=%d ms", 
+                            resp_head->seq, resp_head->body_len, sleep_ms);
+        }
 
         yf_int_t  send_ret;
         if (req_addlen == 0)
@@ -319,10 +330,11 @@ void _test_on_task_fparent(yf_bridge_t* bridge
         while (yf_send_task_res(bridge, task, len, id, 0, log) != YF_OK)
         {
                 fprintf(stderr, "send task res to parent failed, try again\n");
-                usleep(4000);
+                if (_sleep_test_timeout)
+                        usleep(4000);
         }
         
-        if (random() % 8 == 0) 
+        if (_sleep_test_timeout && random() % 8 == 0) 
         {
                 int ms = yf_mod(random(), 512);
                 usleep(ms * 1000);
@@ -487,6 +499,7 @@ static int _test_sock_main(int argc, char **argv, yf_int_t is_client)
         //protocal
         yf_memzero_st(_test_sock_ctx);
         _test_sock_ctx.framers[0] = _test_sock_framer;
+        _test_sock_ctx.tcp_buf_chunk_size = _TEST_TCP_BUF_CHUNKSIZE_PAGE_SIZE;
 
         //addr
         yfr_tdp_addr_init(_test_tdp_addr, AF_INET, SOCK_STREAM, 
@@ -504,6 +517,20 @@ static int _test_sock_main(int argc, char **argv, yf_int_t is_client)
 
 int main(int argc, char **argv)
 {
+        const char* sleep_test_timeout = getenv("sleep_test_timeout");
+        if (sleep_test_timeout)
+                _sleep_test_timeout = atoi(sleep_test_timeout);
+
+        //>=256 will lost msg...
+        //**   if just sock_client.sh set big body_len_page_size, then testor will show:
+        //      client will wait resp timeout, svr all normal...
+        const char* body_len_page_size = getenv("body_len_page_size");
+        if (body_len_page_size)
+        {
+                _test_body_len_page_size = atoi(body_len_page_size);
+                fprintf(stderr, "_test_body_len_page_size=%d\n", _test_body_len_page_size);
+        }
+    
         int choice = atoi(argv[1]);
         int ret = _test_sock_main(argc, argv, choice);
         if (choice)

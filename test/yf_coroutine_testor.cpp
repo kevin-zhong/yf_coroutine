@@ -3,14 +3,21 @@
 #include <vector>
 #include <algorithm>
 
+#ifdef  HAVE_UCONTEXT_H
+#include <ucontext.h>
+#endif
+
 extern "C" {
 #include <coroutine/yfr_coroutine.h>
+#include <coroutine/yfr_greenlet.h>
 #include <syscall_hook/yfr_syscall.h>
 #include <syscall_hook/yfr_dlsym.h>
 #include <syscall_hook/yfr_ipc.h>
 #include <log_ext/yf_log_file.h>
+
 }
 
+#define _ASSERT(r) if (!(r)) {printf("_ASSERT failed: " #r "\n"); yf_exit_with_sig(11);}
 
 yf_pool_t *_mem_pool;
 yf_log_t* _log;
@@ -50,7 +57,7 @@ public:
         virtual void SetUp()
         {
                 yf_evt_driver_init_t driver_init = {0, 
-                                128, 1024, _log, YF_DEFAULT_DRIVER_CB};
+                                512, 2048, _log, YF_DEFAULT_DRIVER_CB};
                 
                 driver_init.poll_cb = _test_on_poll_evt_driver;
                 
@@ -73,11 +80,11 @@ public:
                 yf_register_tm_evt(tm_evt, &_test_stack_watch_tm);
 
                 //init global coroutine set
-                yf_int_t ret = yfr_coroutine_global_set(128, 4096*8, 0, _log);
+                yf_int_t ret = yfr_coroutine_global_set(1024, 4096*8, 0, _log);
                 assert(ret == 0);
                 
                 //init coroutine _test_coroutine_mgr
-                yfr_coroutine_init_t init_info = {128, 4, 64, _evt_driver};
+                yfr_coroutine_init_t init_info = {1024, 8, 64, _evt_driver};
                 _test_coroutine_mgr = yfr_coroutine_mgr_create(&init_info, _log);
                 assert(_test_coroutine_mgr);
 
@@ -93,17 +100,138 @@ public:
         }        
 };
 
+
 /*
-* 101 million switch
-* if in undebug mode, test result is:
-* on my home computer's virtual linux sys:
-* [       OK ] CoroutineTestor.Switch (9173|8970|9121|9033|9374 ms)
-* on a computer with 8 cpus with real 64bit linux sys:
-* [       OK ] CoroutineTestor.Switch (6571|6643|6859|6620|6629|6771 ms)
-*
-* if on debug with -O0 compile, too slow
-[       OK ] CoroutineTestor.Switch (13118 ms)
+* if no evt dirver and core in main thread, log cant flush
 */
+static void _test_reset_switch(int* icnt, int size, int area)
+{
+        _test_switch_total = 0;
+        for (int i = 0; i < size; ++i)
+        {
+                icnt[i] = area;  // (i + 1) * area;
+                _test_switch_total += icnt[i];
+        }
+        std::random_shuffle(icnt, icnt + (YF_ARRAY_SIZE(icnt) - 1));        
+}
+
+
+#ifdef  HAVE_UCONTEXT_H
+
+/*
+* 2016/01/18 test
+--8  Intel(R) Xeon(R) CPU           X3440  @ 2.53GHz
+--cache size      : 8192 KB
+-- physical(1) {cpu cores(4), core ids(8)} // cpu cores -4, siblings - 8
+*  switch total cnt=100000000 // 500 coroutines, each switch 200 thousand times
+*   case : -fno-omit-frame-pointer -O2
+        real    0m42.594s       42.998s     42.488s
+        user    0m29.302s       28.966s     29.038s
+        sys     0m13.281s       14.017s     13.437s
+        avg: 238 million switch per sec
+*/
+
+typedef struct {
+    ucontext_t context;
+    yf_list_part_t linker;
+    yf_u32_t id;
+    int switch_cnt;
+}
+UcontextInfo;
+
+yf_list_part_t  _ucontext_ready_list;
+ucontext_t _ucontext_main;
+UcontextInfo* _ucontext_now;
+
+void _ucontext_switch_proc()
+{
+        UcontextInfo* context_info = _ucontext_now;
+        int icnt = context_info->switch_cnt;
+
+        printf("r(%u) switch cnt=%d\n", context_info->id, icnt);
+        while (icnt)
+        {
+                yf_list_add_tail(&context_info->linker, &_ucontext_ready_list);
+                --icnt;
+                --_test_switch_total;
+                swapcontext(&context_info->context, &_ucontext_main);
+        }
+        printf("r(%u) exit\n", context_info->id);
+}
+
+
+TEST_F(CoroutineTestor, UContextSwitch)
+{
+        int icnt[500];
+        _test_reset_switch(icnt, YF_ARRAY_SIZE(icnt), 200000);
+
+        printf("switch total cnt=%d\n", _test_switch_total);
+        // _ASSERT(0);
+
+        size_t stack_size = 4096 * 4;
+        char* stack_ptrs = new char[stack_size * YF_ARRAY_SIZE(icnt)];
+        assert(stack_ptrs);
+        UcontextInfo* contexts = new UcontextInfo[YF_ARRAY_SIZE(icnt)];
+        assert(contexts);
+
+        getcontext(&_ucontext_main);
+        yf_init_list_head(&_ucontext_ready_list);
+
+        for (size_t i = 0; i < YF_ARRAY_SIZE(icnt); ++i) {
+                getcontext(&contexts[i].context);
+
+                contexts[i].id = i;
+                contexts[i].switch_cnt = icnt[i];
+                contexts[i].context.uc_link = &_ucontext_main;
+                contexts[i].context.uc_stack.ss_sp = stack_ptrs + (stack_size * i);
+                contexts[i].context.uc_stack.ss_size = stack_size;
+                contexts[i].context.uc_stack.ss_flags = 0;
+
+                makecontext(&contexts[i].context, _ucontext_switch_proc, 2, contexts + i, icnt[i]);
+
+                yf_list_add_tail(&contexts[i].linker, &_ucontext_ready_list);
+        }
+
+        yf_list_part_t ready_list;
+        yf_init_list_head(&ready_list);
+        yf_list_part_t *pos, *keep;
+
+        while (_test_switch_total) {
+                yf_list_splice(&_ucontext_ready_list, &ready_list);
+
+                yf_list_for_each_safe(pos, keep, &ready_list) {
+                        yf_list_del(pos);
+
+                        UcontextInfo* context_info = container_of(pos, UcontextInfo, linker);
+                        _ucontext_now = context_info;
+                        swapcontext(&_ucontext_main, &context_info->context);
+                }
+        }
+
+        delete stack_ptrs;
+        delete []contexts;
+}
+
+#endif
+
+
+/*
+* 2016/01/18 test
+--8  Intel(R) Xeon(R) CPU           X3440  @ 2.53GHz
+--cache size      : 8192 KB
+-- physical(1) {cpu cores(4), core ids(8)} // cpu cores -4, siblings - 8
+*  switch total cnt=100000000 // 500 coroutines, each switch 200 thousand times
+*   case : -fno-omit-frame-pointer -O2
+        real    0m8.489s        8.431s      8.532s
+        user    0m8.457s
+        sys     0m0.012s
+        avg: 1176 million switch per sec ~= [[4.94*makecontext's witch]]
+*   case : -fno-omit-frame-pointer -g -O0
+        real    0m15.869s       16.029s     16.150s
+        user    0m15.845s
+        sys     0m0.016s
+*/
+
 yf_int_t _coroutine_switch_proc(yfr_coroutine_t* r)
 {
         int icnt = *(int*)r->arg;
@@ -118,27 +246,14 @@ yf_int_t _coroutine_switch_proc(yfr_coroutine_t* r)
         return  0;
 }
 
-/*
-* if no evt dirver and core in main thread, log cant flush
-*/
-static void _test_reset_switch(int* icnt, int size, int area)
-{
-        _test_switch_total = 0;
-        for (int i = 0; i < size; ++i)
-        {
-                icnt[i] = (i + 1) * area;
-                _test_switch_total += icnt[i];
-        }
-        std::random_shuffle(icnt, icnt + (YF_ARRAY_SIZE(icnt) - 1));        
-}
-
 
 TEST_F(CoroutineTestor, Switch)
 {
-        int icnt[100];
-        _test_reset_switch(icnt, YF_ARRAY_SIZE(icnt), 20000);
+        int icnt[500];
+        _test_reset_switch(icnt, YF_ARRAY_SIZE(icnt), 200000);
 
         printf("switch total cnt=%d\n", _test_switch_total);
+        // _ASSERT(0);
 
         yfr_coroutine_t* r = NULL;
         for (int i = 0; i < YF_ARRAY_SIZE(icnt); ++i)
@@ -152,6 +267,56 @@ TEST_F(CoroutineTestor, Switch)
                 yfr_coroutine_schedule(_test_coroutine_mgr);
         }
 }
+
+
+/*
+* 2016/01/19 test
+--8  Intel(R) Xeon(R) CPU           X3440  @ 2.53GHz
+--cache size      : 8192 KB
+-- physical(1) {cpu cores(4), core ids(8)} // cpu cores -4, siblings - 8
+*  CreateRunExit total cnt=100000000 // >800 coroutines running at the same time
+*   case : -fno-omit-frame-pointer -O2
+        real    0m41.997s       41.503s     42.138s     41.594s     41.762s
+        user    0m41.971s
+        sys     0m0.012s
+        avg: 238 million coroutine [create+run+exit] times per sec
+*/
+
+static yf_s32_t _cor_run_total = 0;
+static yf_s32_t _cor_running_num = 0;
+
+yf_int_t _coroutine_cre_proc(yfr_coroutine_t* r)
+{
+        for (int i = 0; i < 3; ++i) {
+                yfr_coroutine_yield(r);
+        }
+        --_cor_run_total;
+        --_cor_running_num;
+        return  0;
+}
+
+
+TEST_F(CoroutineTestor, CreateRunExit)
+{
+        yfr_coroutine_t* r = NULL;
+        yf_s32_t run_max = 0;
+
+        _cor_run_total = 100000000;
+        _cor_running_num = 0;
+
+        while (_cor_run_total > 0) {
+                run_max = 800 + (random() & 127);
+                for (; _cor_running_num < std::min(_cor_run_total, run_max);
+                                ++_cor_running_num) {
+                        r = yfr_coroutine_create(_test_coroutine_mgr,
+                                _coroutine_cre_proc,
+                                NULL, _log);
+                        assert(r);
+                }
+                yfr_coroutine_schedule(_test_coroutine_mgr);
+        }
+}
+
 
 yf_int_t _coroutine_sleep_proc(yfr_coroutine_t* r)
 {
@@ -380,6 +545,12 @@ yf_int_t _coroutine_serach_kwd(yfr_coroutine_t* r)
                 for (riter = res; riter != NULL; riter = riter->ai_next)
                         avres.push_back(riter);
 
+                if (avres.empty()) 
+                {
+                        printf("errrrrrrrrrr, getaddrinfo empty\n");
+                        goto end;
+                }
+
                 riter = avres[random()%avres.size()];
 
                 char ip_buf[64] = {0};
@@ -556,7 +727,7 @@ again:
                                         ipstr, sizeof(ipstr)));
                         addr++;
                 }
-                printf("\tfist alias=%s\n", hret->h_aliases[0]);
+                printf("\tfirst alias=%s\n", hret->h_aliases[0]);
                 char** alias = hret->h_aliases;
                 while (*alias)
                 {
@@ -579,14 +750,14 @@ end:
         return  0;
 }
 
+const char* domains[] = {"google.com", "xunlei.com", "baidu.com", 
+                "qq.com", "g.cn", "aabb.cn", "sina.com.cn", "sina.com", 
+                "jd.com", "360buy.com", 
+                "taobao.com", "tmall.com"};
 
 TEST_F(CoroutineTestor, Dns)
 {
         yfr_coroutine_t* r = NULL;
-        const char* domains[] = {"google.com", "xunlei.com", "baidu.com", 
-                        "qq.com", "g.cn", "aabb.cn", "sina.com.cn", "sina.com", 
-                        "jd.com", "360buy.com", 
-                        "taobao.com", "tmall.com"};
         
         _test_switch_total = YF_ARRAY_SIZE(domains);
         //_test_switch_total = 1;
@@ -599,6 +770,220 @@ TEST_F(CoroutineTestor, Dns)
                 assert(r);
         }
         
+        yf_evt_driver_start(_evt_driver);
+}
+
+#define _proc_args(a1, a2, a3, a4) \
+        if (a1 != YF_MAGIC_VAL) { \
+                printf("illegal first arg: %d\n", a1); \
+                _ASSERT(0); \
+        } \
+        if (a2 != a3) { \
+                printf("illegal last 2 args:(%p - %p)\n", a2, a3); \
+                _ASSERT(0); \
+        } \
+        *a4 = *a2; \
+        printf("all args checked legal, a2=%p\n", a2);
+
+yfr_fcall_api _coroutine_fcall_child1(int a1, int* a2, void* a3, int* a4)
+{
+        yfr_coroutine_fcall_child;
+        _proc_args(a1, a2, a3, a4);
+
+        yf_log_debug(YF_LOG_DEBUG, _log, 0, "_coroutine_fcall_child1 begin");
+        usleep(random() % 16384);
+        yf_log_debug(YF_LOG_DEBUG, _log, 0, "_coroutine_fcall_child1 done");
+        return 0;
+}
+
+yfr_fcall_api _coroutine_fcall_child2(int a1, int* a2, void* a3, int* a4,
+        int* a5, const void* a6, int* a7, int* a8, void* a9, int* a10)
+{
+         yfr_coroutine_fcall_child;
+        _proc_args(a1, a2, a9, a10);
+        assert(a4 == NULL && a7 == NULL);
+        usleep(random() % 8192);
+
+        struct hostent* hret;
+        const char* domain = (const char*)a6;
+        hret = gethostbyname(domain);
+        if (hret == NULL)
+        {
+                fprintf(stderr, "nslookup err domain=%s, errno=%d, str=%s\n",
+                        domain, h_errno, hstrerror(h_errno));
+        }
+        else {
+                printf("domain=%s, official_name=%s, addrtype=%d, h_length=%d\n", 
+                                domain, hret->h_name, hret->h_addrtype, hret->h_length);
+
+                char ipstr[64];
+                char** addr = hret->h_addr_list;
+                while (*addr) {
+                        printf("\t[%s]\n",  inet_ntop(hret->h_addrtype, *addr, 
+                                        ipstr, sizeof(ipstr)));
+                        addr++;
+                }
+                printf("\tfirst alias=%s\n", hret->h_aliases[0]);
+                char** alias = hret->h_aliases;
+                while (*alias) {
+                        printf("\t[%s]\n", *alias);
+                        alias++;
+                }
+        }
+
+        yf_log_debug(YF_LOG_DEBUG, _log, 0, "_coroutine_fcall_child2 done");
+        FILE* f = fopen(".tst.txt", "a+");
+        if (f) {
+                char szbuf[128];
+                snprintf(szbuf, sizeof(szbuf), "a6=%p, a8=%p, a9=%p\n", a6, a8, a9);
+                fwrite(szbuf, strlen(szbuf), 1, f);
+                fclose(f);
+        }
+        return 0;
+}
+
+
+class _CorFcallClassTest
+{
+public:
+        _CorFcallClassTest() : _a(0) {
+                bzero(_b, sizeof(_b));
+                _a = random();
+        }
+
+        yfr_fcall_api Test(yf_s64_t a, yf_u64_t* r) {
+                yfr_coroutine_fcall_child;
+
+                yf_log_debug(YF_LOG_DEBUG, _log, 0, "_CorFcallClassTest begin, _a=%L, a=%L", _a, a);
+                _a += a;
+
+                yf_u64_t atmp = _a;
+                yf_u64_t* rv = new yf_u64_t[YF_ARRAY_SIZE(_b)];
+                usleep(random() % 1024);
+
+                yf_int_t ret = yfr_coroutine_fcall_start();
+                _ASSERT(ret == 0);
+                for (int i = 0; i < YF_ARRAY_SIZE(_b); ++i) {
+                        rv[i] = _b[i];
+                        _ClsMethod(rv[i], rv+i);
+                }
+                ret = yfr_coroutine_fcall_wait();
+                _ASSERT(ret == 0);
+
+                for (int i = 0; i < YF_ARRAY_SIZE(_b); ++i) {
+                        _ASSERT(rv[i] == _Caculate(_b[i]));
+                        _b[i] = rv[i];
+                        atmp += _b[i];
+                }
+
+                delete []rv;
+                _a = atmp;
+                *r = _a;
+                yf_log_debug(YF_LOG_DEBUG, _log, 0, "_CorFcallClassTest end, _a=%L", _a);
+                return 0;
+        }
+
+        yf_u64_t Get() {
+                return _a;
+        }
+
+private:
+        yfr_fcall_api _ClsMethod(yf_u64_t val, yf_u64_t* pval) {
+                yfr_coroutine_fcall_child;
+                _ASSERT(val == *pval);
+
+                yf_log_debug(YF_LOG_DEBUG, _log, 0,
+                        "_CorFcallClassTest Method begin, val=%L, pval=%p", *pval, pval);
+                if ((random() % 5) == 0) {
+                        usleep(random() % 8192);
+                }
+                *pval = _Caculate(val);
+                yf_log_debug(YF_LOG_DEBUG, _log, 0,
+                        "_CorFcallClassTest Method end, val=%L, pval=%p", *pval, pval);
+                return 0;
+        }
+
+        yf_u64_t __attribute__ ((noinline)) _Caculate(yf_u64_t v) {
+                return ((_a) >> 8) + (v * 3 / 2);
+        }
+private:
+        yf_u64_t _a;
+        yf_u64_t _b[10];
+};
+
+yfr_fcall_api _coroutine_fcall_class()
+{
+
+}
+
+yf_int_t _coroutine_fcall_parent(yfr_coroutine_t* r)
+{
+        _CorFcallClassTest cls_test;
+        yf_u64_t val;
+        for (; _test_switch_total > 0; --_test_switch_total)
+        {
+                int testas[16], testbs[16];
+                int child_num1 = random() % YF_ARRAY_SIZE(testas);
+                int test2as[32], test2bs[32];
+                int child_num2 = random() % YF_ARRAY_SIZE(test2as);
+                // child_num1 = 0;
+                // child_num2 = 0;
+
+                printf("fcall trying %d, child_num1=%d, child_num2=%d\n",
+                        _test_switch_total, child_num1, child_num2);
+
+                yf_int_t ret = yfr_coroutine_fcall_start();
+                _ASSERT(ret == 0);
+
+                for (int j = 0; j < child_num1; ++j)
+                {
+                        testas[j] = random();
+                        _coroutine_fcall_child1(YF_MAGIC_VAL, testas + j, testas + j, testbs + j);
+                }
+                for (int j = 0; j < child_num2; ++j)
+                {
+                        test2as[j] = random();
+                        _coroutine_fcall_child2(YF_MAGIC_VAL, test2as + j,
+                                NULL, NULL, NULL, domains[random()%YF_ARRAY_SIZE(domains)],
+                                NULL, NULL,
+                                test2as + j, test2bs + j);
+                }
+
+                cls_test.Test(random(), &val);
+
+                ret = yfr_coroutine_fcall_wait();
+                assert(ret == 0);
+                for (int j = 0; j < child_num1; ++j)
+                {
+                        if (testas[j] != testbs[j]) {
+                                printf("result error (%d - %d)\n", testas[j], testbs[j]);
+                                _ASSERT(0);
+                        }
+                }
+                for (int j = 0; j < child_num2; ++j)
+                {
+                        if (test2as[j] != test2bs[j]) {
+                                printf("result error (%d - %d)\n", test2as[j], test2bs[j]);
+                                _ASSERT(0);
+                        }
+                }
+                _ASSERT(val == cls_test.Get());
+        }
+        return 0;
+
+}
+
+
+TEST_F(CoroutineTestor, Fcall)
+{
+        printf("Fcall begin\n");
+        _test_switch_total = 100000;
+
+        yfr_coroutine_t* r = NULL;
+        r = yfr_coroutine_create(_test_coroutine_mgr,
+                                _coroutine_fcall_parent,
+                                NULL, _log);
+        assert(r);
         yf_evt_driver_start(_evt_driver);
 }
 
@@ -707,12 +1092,17 @@ TEST_F(CoroutineTestor, Mysql)
 
 
 #ifdef TEST_F_INIT
+#ifdef  HAVE_UCONTEXT_H
+TEST_F_INIT(CoroutineTestor, UContextSwitch);
+#endif
 TEST_F_INIT(CoroutineTestor, Switch);
+TEST_F_INIT(CoroutineTestor, CreateRunExit);
 TEST_F_INIT(CoroutineTestor, Sleep);
 TEST_F_INIT(CoroutineTestor, IpcCond);
 TEST_F_INIT(CoroutineTestor, IpcLock);
 TEST_F_INIT(CoroutineTestor, SocketActive);
 TEST_F_INIT(CoroutineTestor, Dns);
+TEST_F_INIT(CoroutineTestor, Fcall);
 #ifdef HAVE_MYSQL
 TEST_F_INIT(CoroutineTestor, Mysql);
 #endif
@@ -742,7 +1132,7 @@ int main(int argc, char **argv)
         yf_log_file_init_ctx_t log_file_init = {1024*128, 1024*1024*64, 8, 
                         "log/coroutine.log", "%t [%f:%l]-[%v]-[%r]"};
 
-        _log = yf_log_open(YF_LOG_DEBUG, 8192, (void*)&log_file_init);
+        _log = yf_log_open(YF_LOG_INFO, 8192, (void*)&log_file_init);
         
         _mem_pool = yf_create_pool(102400, _log);
 

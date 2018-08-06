@@ -60,12 +60,18 @@ yf_int_t  yfr_socket_conn_tmset(int fd, yf_u32_t ms);
 ssize_t recv(int s, void *buf, size_t len, int flags);
 ssize_t send(int s, const void *buf, size_t len, int flags);
 
+/*
+* MSG_WAITALL ignored, support MSG_DONTWAIT
+*/
 ssize_t recvfrom(int s, void *buf, size_t len, int flags,
                 struct sockaddr *from, socklen_t *fromlen);
 
 ssize_t sendto(int s, const void *buf, size_t len, int flags, 
                 const struct sockaddr *to, socklen_t tolen);
 
+/*
+* not impleted..
+*/
 ssize_t recvmsg(int s, struct msghdr *msg, int flags);
 ssize_t sendmsg(int s, const struct msghdr *msg, int flags);
 
@@ -86,14 +92,21 @@ int socket(int domain, int type, int protocol);
 int connect(int sockfd, const struct sockaddr *serv_addr, socklen_t addrlen);
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 
+int yfr_coroutine_open(int sockfd, int type);
+
 
 int fcntl(int fd, int cmd, ...);
 int setsockopt(int s, int level, int optname, 
                 const void *optval, socklen_t optlen);
 
+int ioctl(int fd, unsigned long int request, ...);
+
+// ret=0, replaced syscall, otherwise will call org syscal
+int yfr_ioctl_hook(int fd, unsigned long int request, ...);
+
 
 /*
-* select + poll, cautions: these apis if used in coroutine, no effect at all...
+* select + poll...
 */
 #ifdef  HAVE_SYS_SELECT_H
 int select(int nfds, fd_set *readfds, fd_set *writefds,
@@ -150,6 +163,7 @@ yf_int_t  yfr_bridge_destory(yf_bridge_t* bridge, yf_log_t* log);
 
 yf_int_t yfr_attach_res_bridge(yf_bridge_t* bridge
                 , yf_evt_driver_t* evt_driver, yf_log_t* log);
+
 
 #endif
 

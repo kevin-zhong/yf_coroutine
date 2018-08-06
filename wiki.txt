@@ -31,7 +31,7 @@ rbtree，猛然醒悟，我在用c++的思想在写c的代码；在c里面内存管理不是数据
 写出来，确实非常困难和恶心；coroutine，解决痛苦的利器；！
 
 
-2014/03/25 21:54
+2013/03/25 21:54
 觉得给socket用的 chain 用起来非常别扭，而且在有些情况下满足不了需求
 于是想开发自己的的socket专用缓冲buf，要满足几点：
 1，能自动伸缩，即能扩容，能缩减，以适应socket中不同的缓冲大小需求；
@@ -71,3 +71,175 @@ rbtree，猛然醒悟，我在用c++的思想在写c的代码；在c里面内存管理不是数据
 13/05/23 17:52:36 128 [./base_struct/yf_mem_pool.c:78]-[debug]-[3086173968-508175508250]free: 0A815FF0, unused: 2008
 13/05/23 17:52:36 128 [./syscall_hook/yfr_socket_ext.c:1255]-[debug]-[3086173968-508175508250]rw error, type=0, delete from conn pool, rest conn num=2
 13/05/23 17:52:36 128 [./base_struct/yf_node_pool.c:73]-[debug]-[3086173968-508175508250]total_num=1024, after alloc 1369374808, free=1018, alloc_ptr=0934308C
+
+
+2014/06/24 
+linux 下 syshook 只能针对外部的接口访问，但对于系统内部的函数，如果此函数内部调用了其他的函数，是完全无法hook的
+比如：getaddreinfo 其内部其实也是由send，recv等等组成的，但你是完全无法hook里面的调用的，所以才必须直接hook getaddreinfo
+同样的道理，在测试中，发现有部分函数完全无法hook：
+
+1403586210.206412 socket(PF_NETLINK, SOCK_RAW, 0) = 9
+1403586210.206503 bind(9, {sa_family=AF_NETLINK, pid=0, groups=00000000}, 12) = 0
+1403586210.206598 getsockname(9, {sa_family=AF_NETLINK, pid=2312, groups=00000000}, [37095392017383436]) = 0
+1403586210.206746 gettimeofday({1403586210, 206766}, NULL) = 0
+1403586210.206843 sendto(9, "\24\0\0\0\22\0\1\3\242\6\251S\0\0\0\0\0\0\0\0", 20, 0, {sa_family=AF_NETLINK, pid=0, groups=00000000},
+12) = 20
+1403586210.206977 recvmsg(9, {msg_name(12)={sa_family=AF_NETLINK, pid=0, groups=00000000}, msg_iov(1)=[{"\360\0\0\0\20\0\2\0\242\6\2
+51S\10\t\0\0\0\0\4\3\1\0\0\0"..., 4096}], msg_controllen=0, msg_flags=0}, 0) = 972
+1403586210.207132 recvmsg(9, {msg_name(12)={sa_family=AF_NETLINK, pid=0, groups=00000000}, msg_iov(1)=[{"\24\0\0\0\3\0\2\0\242\6\251
+S\10\t\0\0\0\0\0\0\1\0\0\0I"..., 4096}], msg_controllen=0, msg_flags=0}, 0) = 20 
+1403586210.207282 sendto(9, "\24\0\0\0\26\0\1\3\243\6\251S\0\0\0\0\0\357\v\224", 20, 0, {sa_family=AF_NETLINK, pid=0, groups=0000000
+0}, 12) = 20
+1403586210.207401 recvmsg(9, {msg_name(12)={sa_family=AF_NETLINK, pid=0, groups=00000000}, msg_iov(1)=[{"0\0\0\0\24\0\2\0\243\6\251S
+\10\t\0\0\2\10\200\376\1\0\0"..., 4096}], msg_controllen=0, msg_flags=0}, 0) = 108
+1403586210.207552 recvmsg(9, {msg_name(12)={sa_family=AF_NETLINK, pid=0, groups=00000000}, msg_iov(1)=[{"\24\0\0\0\3\0\2\0\243\6\251
+S\10\t\0\0\0\0\0\0\1\0\0\0\10"..., 4096}], msg_controllen=0, msg_flags=0}, 0) = 20
+1403586210.207697 close(9)  
+
+且，如果用gdb break 这几个函数，均直接跳过了，因为gdb break的函数实际上 yf_coroutine 里面的函数，但实际这几个根本就没被hook，其指向的是原来so里面的函数   
+
+
+仔细一想，这个其实是说的通的，因为hook本来就是借助so的动态加载才实现的
+对于so里面的函数，如果其调用自身内部的函数，其实应该是差不多绑定了，所以gdb才break不掉
+怎么证实呢：完全可以写个so，里面有个函数A调用so里面的一个函数B，然后在另外一个so hook函数B，看下效果
+
+
+2015/07/09
+原来coroutine的堆栈保护一直有问题
+mprotect 一直没有起作用，之前还怀疑这个函数的有效性
+后来有次strace程序，发现 mprotect 返回都是失败，strace发现 mprotect 的地址都有问题
+后来才发现这个宏有问题，yf_pagesize 是 uint，取-后，其实不是负数，而是一个很大的正整数。。。
+#define _yfr_coroutine_s2m(s)  yf_mem_off(s, -(yf_s32_t)yf_pagesize)
+
+更改之后，正常工作，发现如果堆栈要求内存超过固定大小，即发生段错误，如下代码：
+char buffer[kMaxBufferSize] = {0}; //在栈上分配了 64k 的数据，而整个栈才64k，所以立即崩掉了，gdb查看core文件发现：
+
+Program terminated with signal 11, Segmentation fault.
+#0  0x00007f1f1ed9e14b in memset () from /lib64/libc.so.6
+这里调用 memset，而内存已经保护了，自然core了
+
+
+2015/10/15
+mysql连接本地的coroutine会有问题
+
+2016/01/18
+所有测试均在同一台 C1 的机器上进行
+--8  Intel(R) Xeon(R) CPU           X3440  @ 2.53GHz
+--cache size      : 8192 KB
+-- physical(1) {cpu cores(4), core ids(8)} // cpu cores -4, siblings - 8
+
+协程的切换效率到底怎么样，对业务层的影响又是多大?
+经过测试: 
+makecontext 裸用: 一秒切换大约是 240万次左右
+coroutine: 一秒切换大约是 1200万次左右
+libco: 一秒切换大约是 850万次左右
+// 测试结果与libco自测差不多：在C1机型上单线程,一个来回 co_swapcontext 1千万次750ms, libc swapcontext 2550ms(3.4倍)
+
+按一个svr，一秒服务5万请求，一次请求3个远程调用(外加一次进入退出的切换算1次)，一秒切换量为：5*4=20万
+如果用 makecontext 来实现，则协程对业务的影响是：cpu额外占用 20万/240万 = 8.3% 的cpu
+如果用 coroutine 来实现，则协程对业务的影响是：cpu额外占用 20万/1200万 = 1.67% 的cpu
+如果用 libco 来实现...
+
+coroutine 对业务的影响是非常小的
+
+2016/01/19
+今天测试了模拟业务请求过来，从创建协程，协程切换（里面切换三次）, 然后退出的过程
+这是比较真实的模拟
+经过测试：
+avg: 238 million coroutine [create+run+exit] times per sec
+按一个svr，一秒服务5万请求，一次请求3次远程调用（即和模拟一致）
+则协程对业务的影响是：cpu总体额外占用：5万/238万 = 2.10%
+性能是非常高效的
+
+makecontext 做底层实现：10.43%，影响已经比较可观了(1/3的cpu耗在信号处理的syscall调用上面)
+
+对比了 libco 的测试：
+经过测试：
+avg: 149 million routine times per sec
+按一个svr，一秒服务5万请求，一次请求3次远程调用（即和模拟一致）
+则协程对业务的影响是：cpu总体额外占用：5万/149万 = 3.36%
+
+协程效率：238/149~=1.60plus
+
+每个请求一个协程，协程id是完全(libco在这点上不好用)
+
+
+2016/01/19 22:15:08
+包长为：32字节, client 并发：900连接, 延时超过3s(单向1.5s)即失败，在失败率为0的情况下：
+example_echocli -> (./example_echosvr 0.0.0.0 9987) -> (./example_echosvr 0.0.0.0 9986)
+
+......
+time 1453253539 Succ Cnt 51439 Fail Cnt 0
+time 1453253540 Succ Cnt 52040 Fail Cnt 0
+time 1453253541 Succ Cnt 57553 Fail Cnt 0
+time 1453253542 Succ Cnt 57630 Fail Cnt 0
+time 1453253543 Succ Cnt 57195 Fail Cnt 0
+time 1453253544 Succ Cnt 57226 Fail Cnt 0
+time 1453253545 Succ Cnt 56649 Fail Cnt 0
+time 1453253546 Succ Cnt 57359 Fail Cnt 0
+time 1453253547 Succ Cnt 56674 Fail Cnt 0
+time 1453253548 Succ Cnt 56908 Fail Cnt 0
+time 1453253549 Succ Cnt 57827 Fail Cnt 0
+time 1453253550 Succ Cnt 58275 Fail Cnt 0
+......
+avg: 5.4万 qps，无丢包
+
+example_echocli(10.185.12.41) -> (yf_echo_svr 0.0.0.0 9986 0.0.0.0 9987) -> (./yf_echo_svr 0.0.0.0 9987)
+......
+time 1453250340 Succ Cnt 83517 Fail Cnt 0
+time 1453250355 Succ Cnt 74113 Fail Cnt 0
+time 1453250356 Succ Cnt 74076 Fail Cnt 0
+time 1453250357 Succ Cnt 74262 Fail Cnt 0
+time 1453250358 Succ Cnt 73549 Fail Cnt 0
+time 1453250359 Succ Cnt 73995 Fail Cnt 0
+time 1453250468 Succ Cnt 76298 Fail Cnt 0
+time 1453250469 Succ Cnt 77000 Fail Cnt 0
+time 1453250482 Succ Cnt 82295 Fail Cnt 0
+time 1453250483 Succ Cnt 82021 Fail Cnt 0
+time 1453250484 Succ Cnt 82369 Fail Cnt 0
+......
+
+avg: 7.6万 qps
+cpu 见截图
+总体效率：7.6/5.4~=1.41plus
+
+
+2016/04/26
+yf_coroutine + 外部一些log库结合的情况下，无法支持 memcached client
+但如果是 yf_log 本身的 log 库就没问题(比如：写个简单的不依赖那个特殊log库的测试程序，是完全正常的)
+经 gdb 单步执行，在 recvfrom 这里找到了问题
+errno 本来在 recvfrom 里面是：EAGAIN，但到了memcached 的调用处(io.cc:memcached_io_read 的 ::recv 处)
+errno 竟然被设置为了 0, 然后memcached 关了连接...
+
+所以 errno 的设置一定要在 return 之前，防止设置后，调用其他函数被改写
+
+
+2016/08/10
+今天终于将test程序全部都改成了静态链接 libyf_coroutine.a
+因为今天在一台机器上测试的时候，发现动态链接ld后，报：
+unresolvable R_X86_64_PC32 relocation against symbol _greenlet_savecontext
+unresolvable R_X86_64_PC32 relocation against symbol _greenlet_fcall_end
+dynamic variable is zero size _greenlet_savecontext/_greenlet_fcall_end
+
+disas _coroutine_fcall_child1 竟然发现：_greenlet_savecontext 地址为 0x0...
+0x0000000000407f7f <_Z23_coroutine_fcall_child1iPiPvS_+173>:    mov    0xffffffffffffffb0(%rbp),%rax
+0x0000000000407f83 <_Z23_coroutine_fcall_child1iPiPvS_+177>:    add    $0x38,%rax
+0x0000000000407f87 <_Z23_coroutine_fcall_child1iPiPvS_+181>:    mov    %rax,%rdi
+0x0000000000407f8a <_Z23_coroutine_fcall_child1iPiPvS_+184>:    callq  0x0
+0x0000000000407f8f <_Z23_coroutine_fcall_child1iPiPvS_+189>:    test   %eax,%eax
+0x0000000000407f91 <_Z23_coroutine_fcall_child1iPiPvS_+191>:    sete   %al
+0x0000000000407f94 <_Z23_coroutine_fcall_child1iPiPvS_+194>:    test   %al,%al
+0x0000000000407f96 <_Z23_coroutine_fcall_child1iPiPvS_+196>:    je     0x4080c2 <_Z23_coroutine_fcall_child1iPiPvS_+496>
+
+估计是c++调用汇编函数链接问题
+懒得麻烦了，改成静态链接，ok了：
+0x0000000000407f7f <_Z23_coroutine_fcall_child1iPiPvS_+173>:    mov    0xffffffffffffffb0(%rbp),%rax
+0x0000000000407f83 <_Z23_coroutine_fcall_child1iPiPvS_+177>:    add    $0x38,%rax
+0x0000000000407f87 <_Z23_coroutine_fcall_child1iPiPvS_+181>:    mov    %rax,%rdi
+0x0000000000407f8a <_Z23_coroutine_fcall_child1iPiPvS_+184>:    callq  0x45255c <_greenlet_savecontext>
+0x0000000000407f8f <_Z23_coroutine_fcall_child1iPiPvS_+189>:    test   %eax,%eax
+0x0000000000407f91 <_Z23_coroutine_fcall_child1iPiPvS_+191>:    sete   %al
+0x0000000000407f94 <_Z23_coroutine_fcall_child1iPiPvS_+194>:    test   %al,%al
+0x0000000000407f96 <_Z23_coroutine_fcall_child1iPiPvS_+196>:    je     0x4080c2 <_Z23_coroutine_fcall_child1iPiPvS_+496>
+
+幸亏懂点汇编....

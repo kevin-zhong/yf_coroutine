@@ -6,6 +6,7 @@
 */
 
 #include <yfr_head.h>
+#include "yfr_greenlet.h"
 
 typedef struct yfr_coroutine_s yfr_coroutine_t;
 
@@ -39,11 +40,15 @@ extern yf_s8_t yfr_coroutine_specific_num;
 #define yfr_coroutine_addr(stack_val) ((yfr_coroutine_t*) \
                 (yf_align((yf_uint_ptr_t)&stack_val, (yf_uint_ptr_t)yfr_coroutine_take_size) \
                         - yfr_coroutine_meta_size))
-                
-#define yfr_coroutine_check(r) ((char*)(r)>yfr_coroutine_mem_begin \
-                && (char*)(r)<yfr_coroutine_mem_end)
 
 #define yfr_coroutine_specific_addr(r) yf_mem_off(r, yfr_coroutine_head_size)
+
+yf_int_t yfr_coroutine_check(yfr_coroutine_t* r);
+
+/*
+* for yfr_coroutine_check ret false to stop replace sys hook
+*/
+yf_int_t yfr_coroutine_hidden_set(yfr_coroutine_t* r, yf_int_t hidden);
 
 
 #define YFR_COROUTINE_STACK_WATCH_SPLIT 8
@@ -75,7 +80,7 @@ typedef struct yfr_coroutine_init_s
 yfr_coroutine_init_t;
 
 
-#define yfr_coroutine_mgr_t yf_u64_t
+typedef struct yfr_coroutine_mgr_s yfr_coroutine_mgr_t;
 
 yfr_coroutine_mgr_t*  yfr_coroutine_mgr_create(
                 yfr_coroutine_init_t* init_info, yf_log_t* log);
@@ -134,6 +139,39 @@ void yfr_coroutine_yield(yfr_coroutine_t* r);
 yf_int_t yfr_coroutine_cancel(yfr_coroutine_t* r);
 
 yf_int_t  yfr_coroutine_exit_status(yfr_coroutine_t* r);
+
+
+yfr_coroutine_t* _yfr_coroutine_fcall_child_pre(yfr_coroutine_t* r,
+        yfr_greenlet_t** greenlet_self,
+        yfr_greenlet_t** greenlet_child);
+
+void* _yfr_coroutine_fcall_endcb(void* arg, yfr_greenlet_t* gr);
+
+
+#define yfr_fcall_api int __attribute__ ((noinline))
+
+/*
+* this func just can be call in coroutine
+*/
+yf_int_t yfr_coroutine_fcall_start();
+
+#define yfr_coroutine_fcall_child do { \
+        yfr_greenlet_t* greenlet_self = NULL; \
+        yfr_greenlet_t* greenlet_child = NULL; \
+        yfr_coroutine_t* cor_self = yfr_coroutine_addr(greenlet_self); \
+        if (unlikely(!yfr_coroutine_check(cor_self))) { \
+                return -1; \
+        } \
+        yfr_coroutine_t* cor_child = _yfr_coroutine_fcall_child_pre( \
+                cor_self, &greenlet_self, &greenlet_child); \
+        if (cor_child == NULL) { \
+                return 0; \
+        } \
+        yfr_greenlet_fcall(greenlet_self, greenlet_child, _yfr_coroutine_fcall_endcb); \
+} while (0)
+
+
+yf_int_t yfr_coroutine_fcall_wait();
 
 
 #endif

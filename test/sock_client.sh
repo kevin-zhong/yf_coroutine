@@ -16,9 +16,15 @@ export DYLD_FORCE_FLAT_NAMESPACE=1
 export DYLD_INSERT_LIBRARIES=`echo $LD_PRELOAD | sed 's/\.so/\.dylib/g'`
 export DYLD_LIBRARY_PATH=$YF_SO:$DYLD_LIBRARY_PATH
 
-rm log/sock_client.log
+rm log/sock_client.log*
 
-./yf_sock_testor 10240000 2>&1 > /tmp/client.log
+export body_len_page_size=258
+#valgrind --tool=memcheck --leak-check=full ls
+#valgrind --tool=memcheck --leak-check=full .libs/lt-yf_sock_testor 4096
+#.libs/lt-yf_sock_testor 1024
+#./yf_sock_testor 1024
+#exit
+./yf_sock_testor 10240000 2>&1 > /dev/null
 
 echo "test finished !!"
 sleep 36

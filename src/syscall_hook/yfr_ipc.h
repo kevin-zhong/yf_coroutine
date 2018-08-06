@@ -85,5 +85,7 @@ void  yfr_ipc_cond_wait(yfr_ipc_cond_t* c);
 
 void  yfr_ipc_cond_sig(yfr_ipc_cond_t* c);
 
+void  yfr_ipc_cond_sig_one(yfr_ipc_cond_t* c);
+
 #endif
 
